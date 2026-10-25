@@ -11,7 +11,7 @@
 
 **NovaMotion** is an open-source, full-stack generative AI video creation studio and multi-model orchestration engine. Create, queue, playback, and remix cinematic AI videos across premier engines like **Runway Gen-4**, **Runway Lite**, **Grok 1.5 Lite**, **WAN 3.0 Prime**, and **MiniMax H3 Max**.
 
-[Features](#-key-features) • [Engines](#-supported-generative-engines) • [Quick Start](#-1-minute-quick-start) • [Architecture](#-architecture) • [Self-Hosting](#-self-hosting--byok) • [Monetization Engine](#-built-in-unit-economics--monetization)
+[Features](#-key-features) • [Engines](#-supported-generative-engines) • [Quick Start](#-1-minute-quick-start) • [Architecture](#-architecture) • [Self-Hosting](#-self-hosting--byok) • [Cost & Compute Transparency](#-transparent-compute--cost-efficiency)
 
 </div>
 
@@ -39,10 +39,9 @@
   - Powered by **BullMQ + Redis** with concurrent generation queues, real-time polling, and instant job cancellation.
   - Built-in Mock Provider mode for zero-cost, zero-API-key local testing.
 
-- **💰 Positive-Margin Monetization & Financial Audit**:
-  - Automated wholesale cost tracking ($0.01 USD / credit) vs user retail billing.
-  - Configurable platform markup formula ensuring positive net profit on every second generated.
-  - Free administrative audit dashboard with real-time margins, API health latency check, and ledger adjustments.
+- **📊 Transparent Compute & Audit Dashboard**:
+  - Real-time tracking of exact provider compute costs ($0.01 USD / credit) with zero hidden fees.
+  - Free administrative audit dashboard with real-time model statistics, API latency checks, and queue health monitoring.
 
 ---
 
@@ -127,16 +126,13 @@ NovaMotion supports **Bring Your Own Key (BYOK)** directly in the UI. If you are
 
 ---
 
-## 📈 Built-in Unit Economics & Monetization
+## 📊 Transparent Compute & Cost Efficiency
 
-For founders looking to launch their own video generation startup, NovaMotion includes a mathematically guaranteed positive margin engine:
+Commercial AI video tools often lock users behind opaque monthly plans with expiring credits. NovaMotion is engineered with compute transparency from the ground up:
 
-$$\text{User Generation Price} = \lceil \text{Wholesale API Cost} \times 1.50 \rceil + 2 \text{ credits}$$
-
-- **Wholesale API Cost**: Real cost from Runway Dev API ($0.01 USD / credit).
-- **1.50x Markup Multiplier**: Ensures 50%+ gross margin on model compute.
-- **+2 Credits Base Fee**: Absorbs network egress, queue processing, and micro-storage costs.
-- **Retail Credit Packs**: Pre-configured tiers ($12 / 600 credits, $29 / 1,800 credits, $59 / 4,200 credits).
+- **Direct Compute Rates**: When self-hosting (BYOK), you interface directly with upstream generative video providers at raw API compute rates ($0.01 USD / credit) with zero platform surcharge.
+- **Real-Time Job Audit**: The built-in Operations Center allows you to inspect exact generation parameters per model, latency benchmarks, and queue metrics.
+- **Resource Control**: Full visibility into team GPU seconds and render history so you always know where compute is being allocated.
 
 ---
 
