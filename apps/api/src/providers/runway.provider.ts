@@ -26,8 +26,15 @@ export class RunwayVideoProvider implements IVideoProvider {
       ? 'https://api.dev.runwayml.com/v1/image_to_video' 
       : 'https://api.dev.runwayml.com/v1/text_to_video';
 
+    let modelName = 'grok_imagine_1_5_lite';
+    if (request.modelId === 'runway-gen4' || request.modelId === 'runway-gen3-alpha') {
+      modelName = 'gen4.5';
+    } else if (request.modelId === 'runway-lite' || request.modelId === 'runway-gen2') {
+      modelName = 'grok_imagine_1_5_lite';
+    }
+
     const payload: Record<string, any> = {
-      model: 'gen4.5',
+      model: modelName,
       promptText,
       duration: request.duration || 5,
       ratio: this.mapAspectRatio(request.aspectRatio),
