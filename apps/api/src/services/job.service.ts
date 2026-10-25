@@ -1,6 +1,7 @@
 import { GenerateVideoRequest, VideoJob, VideoModelInfo } from '@videolab/shared';
 import { prisma } from '@videolab/database';
 import { v4 as uuidv4 } from 'uuid';
+import { adminService } from './admin.service.js';
 
 class JobService {
   private jobsCache: Map<string, VideoJob> = new Map();
@@ -50,28 +51,13 @@ class JobService {
     const id = uuidv4();
     const now = new Date().toISOString();
 
-    let creditsUsed = 0;
-    if (model.id === 'gen4-turbo') {
-      creditsUsed = Math.max(10, request.duration * 5);
-    } else if (model.id === 'wan3-prime') {
-      let rate = 14;
-      if (request.resolution === '480p') rate = 6.8;
-      else if (request.resolution === '1080p') rate = 28;
-      creditsUsed = Math.round(request.duration * rate * 10) / 10;
-    } else if (model.id === 'h3-max') {
-      const rate = request.resolution === '480p' ? 5 : 8;
-      const effectiveDuration = Math.max(5, request.duration);
-      creditsUsed = effectiveDuration * rate;
-    } else {
-      // Default: Grok Imagine Video 1.5 Lite
-      let ratePerSecond = 3;
-      if (request.resolution === '480p') ratePerSecond = 2;
-      else if (request.resolution === '1080p') ratePerSecond = 14;
-      creditsUsed = request.duration * ratePerSecond;
-      if (request.referenceImageUrl) {
-        creditsUsed += 1; // 1 credit for reference start frame
-      }
-    }
+    const wholesaleCredits = adminService.calculateWholesaleCost(
+      model.id,
+      request.duration,
+      request.resolution,
+      Boolean(request.referenceImageUrl)
+    );
+    const creditsUsed = adminService.calculateUserCharge(wholesaleCredits);
 
     const job: VideoJob = {
       id,
@@ -87,6 +73,7 @@ class JobService {
       duration: request.duration,
       resolution: request.resolution,
       creditsUsed,
+      providerCostCredits: wholesaleCredits,
       createdAt: now,
       updatedAt: now,
     };

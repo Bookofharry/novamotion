@@ -178,51 +178,55 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     });
   };
 
-  // Model-specific pricing calculation
-  const calculateCost = (): { total: number; rateLabel: string; subtext: string } => {
+  // Model-specific pricing calculation (Guaranteed Platform Profit Formula: ceil(wholesale * 1.5) + 2)
+  const calculateCost = (): { 
+    total: number; 
+    wholesale: number;
+    platformFee: number;
+    rateLabel: string; 
+    subtext: string;
+  } => {
     const mId = activeModel?.id;
+    let wholesale = 15;
+    let rateLabel = '3 credits/s';
+    let subtext = '2 credits/s at 480p, 3 at 720p, 14 at 1080p. Start frame adds 1 credit.';
 
     if (mId === 'gen4-turbo') {
-      const total = Math.max(10, duration * 5);
-      return {
-        total,
-        rateLabel: `5 credits/s (min 10 credits)`,
-        subtext: `5 credits per second of video (minimum 10 credits).`,
-      };
-    }
-
-    if (mId === 'wan3-prime') {
+      wholesale = Math.max(10, duration * 5);
+      rateLabel = '5 credits/s (min 10)';
+      subtext = '5 credits per second of video (minimum 10 credits).';
+    } else if (mId === 'wan3-prime') {
       let rate = 14;
       if (resolution === '480p') rate = 6.8;
       else if (resolution === '1080p') rate = 28;
-      const total = Math.round(duration * rate * 10) / 10;
-      return {
-        total,
-        rateLabel: `${rate} credits/s`,
-        subtext: `6.8 credits per second at 480p, 14 at 720p, 28 at 1080p.`,
-      };
-    }
-
-    if (mId === 'h3-max') {
+      wholesale = Math.round(duration * rate * 10) / 10;
+      rateLabel = `${rate} credits/s`;
+      subtext = '6.8 credits/s at 480p, 14 at 720p, 28 at 1080p.';
+    } else if (mId === 'h3-max') {
       const rate = resolution === '480p' ? 5 : 8;
       const effectiveDur = Math.max(5, duration);
-      const total = effectiveDur * rate;
-      return {
-        total,
-        rateLabel: `${rate} credits/s (5s min)`,
-        subtext: `5 credits per second at 480p, 8 credits per second at 768p (5 second minimum).`,
-      };
+      wholesale = effectiveDur * rate;
+      rateLabel = `${rate} credits/s (5s min)`;
+      subtext = '5 credits/s at 480p, 8 credits/s at 768p (5 second minimum).';
+    } else {
+      // Grok Imagine Video 1.5 Lite
+      let rate = 3;
+      if (resolution === '480p') rate = 2;
+      else if (resolution === '1080p') rate = 14;
+      wholesale = duration * rate + (referenceImageUrl ? 1 : 0);
+      rateLabel = `${rate} credits/s`;
+      subtext = '2 credits/s at 480p, 3 at 720p, 14 at 1080p. Start frame adds 1 credit.';
     }
 
-    // Grok Imagine Video 1.5 Lite
-    let rate = 3;
-    if (resolution === '480p') rate = 2;
-    else if (resolution === '1080p') rate = 14;
-    const total = duration * rate + (referenceImageUrl ? 1 : 0);
+    const total = Math.ceil(wholesale * 1.5) + 2;
+    const platformFee = total - Math.ceil(wholesale);
+
     return {
       total,
-      rateLabel: `${rate} credits/s`,
-      subtext: `2 credits per second at 480p, 3 at 720p, 14 at 1080p (720p upscaled). An image-to-video start frame adds 1 credit.`,
+      wholesale: Math.ceil(wholesale),
+      platformFee,
+      rateLabel,
+      subtext,
     };
   };
 
@@ -640,11 +644,14 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             <div className="flex items-center gap-2 text-xs text-slate-300">
               <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
               <span>
-                Estimated cost: <strong className="text-teal-300 font-mono text-sm">{costInfo.total} credits</strong> ({duration}s @ {costInfo.rateLabel})
+                Generation fee: <strong className="text-teal-300 font-mono text-sm">{costInfo.total} credits</strong>
+                <span className="text-slate-400 text-[11px] ml-1.5 font-normal">
+                  ({costInfo.wholesale} GPU compute + {costInfo.platformFee} platform orchestration)
+                </span>
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-mono pl-6">
-              {costInfo.subtext}
+              Wholesale base: {costInfo.subtext}
             </p>
           </div>
 

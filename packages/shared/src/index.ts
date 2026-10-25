@@ -168,7 +168,28 @@ export interface PlatformAuditSummary {
   netProfitUsd: number;
   marginPercentage: number;
   markupMultiplier: number;
+  basePlatformFeeCredits: number;
   modelStats: ModelAuditStat[];
   jobs: JobAuditDetail[];
 }
+
+export interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  priceUsd: number;
+  costPerCreditUsd: number;
+  popular?: boolean;
+  savingsPercent?: number;
+  description: string;
+  features: string[];
+}
+
+export interface PricingModelConfig {
+  wholesaleCreditCostUsd: number; // $0.01 fixed Runway cost
+  markupMultiplier: number; // default 1.5x (50% markup)
+  basePlatformFeeCredits: number; // fixed fee per generation (e.g. 2 credits)
+  minGenerationChargeCredits: number; // minimum user charge (e.g. 5 credits)
+}
+
 

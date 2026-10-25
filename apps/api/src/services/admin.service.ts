@@ -1,9 +1,63 @@
-import { PlatformAuditSummary, ModelAuditStat, JobAuditDetail } from '@videolab/shared';
+import { PlatformAuditSummary, ModelAuditStat, JobAuditDetail, CreditPackage } from '@videolab/shared';
 import { jobService } from './job.service.js';
 import { CONFIG, AVAILABLE_MODELS } from '../config.js';
 
+export const CREDIT_PACKAGES: CreditPackage[] = [
+  {
+    id: 'starter',
+    name: 'Starter Pack',
+    credits: 600,
+    priceUsd: 12.00,
+    costPerCreditUsd: 0.020,
+    description: 'Perfect for quick tests and social media clips (~24-30 Grok generations).',
+    features: [
+      '600 Platform Credits ($0.02/c)',
+      'All 4 Video Engines (Grok, Gen-4, WAN, MiniMax)',
+      'Multi-Clip FFmpeg Sequencer & Trimmer',
+      'Atmospheric AI Soundtracks',
+      'No expiration date',
+    ],
+  },
+  {
+    id: 'creator',
+    name: 'Creator Pack',
+    credits: 1800,
+    priceUsd: 29.00,
+    costPerCreditUsd: 0.016,
+    popular: true,
+    savingsPercent: 20,
+    description: 'Our most popular pack for content creators, agencies, and producers (~80-100 videos).',
+    features: [
+      '1,800 Platform Credits (20% bonus)',
+      'Priority GPU Generation Queue',
+      'Full 1080p & 768p High-Definition videos',
+      'Native audio & prompt expansion',
+      'Commercial usage license',
+      'Procedural Soundscape Studio',
+    ],
+  },
+  {
+    id: 'studio',
+    name: 'Pro Studio Pack',
+    credits: 4200,
+    priceUsd: 59.00,
+    costPerCreditUsd: 0.014,
+    savingsPercent: 30,
+    description: 'Designed for high-throughput studios, marketing teams, and power users (~200+ videos).',
+    features: [
+      '4,200 Platform Credits (30% bonus)',
+      'Fastest GPU cluster priority',
+      'Unlimited FFmpeg multi-clip timeline stitching',
+      'Image-to-Video & Native Audio sync',
+      'Full Commercial & Broadcast License',
+      'Dedicated priority rendering',
+    ],
+  },
+];
+
 class AdminService {
-  private markupMultiplier: number = 1.25; // 25% margin default
+  private markupMultiplier: number = 1.50; // 50% profit margin by default
+  private basePlatformFeeCredits: number = 2; // +2 credits fixed fee per generation
   private extraCreditsAdjusted: number = 0;
 
   getMarkupMultiplier(): number {
@@ -15,6 +69,15 @@ class AdminService {
     return this.markupMultiplier;
   }
 
+  getBasePlatformFee(): number {
+    return this.basePlatformFeeCredits;
+  }
+
+  setBasePlatformFee(fee: number): number {
+    this.basePlatformFeeCredits = Math.max(0, Math.min(20, fee));
+    return this.basePlatformFeeCredits;
+  }
+
   getAdjustedCredits(): number {
     return this.extraCreditsAdjusted;
   }
@@ -24,26 +87,35 @@ class AdminService {
     return this.extraCreditsAdjusted;
   }
 
-  private calculateRunwayCost(job: any): number {
-    if (typeof job.providerCostCredits === 'number' && job.providerCostCredits > 0) {
-      return job.providerCostCredits;
+  purchasePackage(packageId: string): { success: boolean; pkg: CreditPackage; newBalance: number } {
+    const pkg = CREDIT_PACKAGES.find(p => p.id === packageId);
+    if (!pkg) {
+      throw new Error(`Package not found: ${packageId}`);
     }
+    this.extraCreditsAdjusted += pkg.credits;
+    return {
+      success: true,
+      pkg,
+      newBalance: 250 + this.extraCreditsAdjusted,
+    };
+  }
 
-    const dur = job.duration || 5;
-    const modelId = job.modelId;
+  // Exact wholesale cost paid to Runway ($0.01 per Runway credit)
+  calculateWholesaleCost(modelId: string, duration: number, resolution: string, hasImage: boolean): number {
+    const dur = duration || 5;
 
     if (modelId === 'gen4-turbo') {
-      return Math.max(10, dur * 5);
+      return Math.max(10, dur * 5); // 5 credits/s, min 10
     }
     if (modelId === 'wan3-prime') {
       let rate = 14;
-      if (job.resolution === '480p') rate = 6.8;
-      else if (job.resolution === '1080p') rate = 28;
+      if (resolution === '480p') rate = 6.8;
+      else if (resolution === '1080p') rate = 28;
       return Math.round(dur * rate * 10) / 10;
     }
     if (modelId === 'h3-max') {
-      const rate = job.resolution === '480p' ? 5 : 8;
-      return Math.max(5, dur) * rate;
+      const rate = resolution === '480p' ? 5 : 8;
+      return Math.max(5, dur) * rate; // 5s min
     }
     if (modelId === 'gen4.5') {
       return dur * 12; // 60 credits for 5s
@@ -51,14 +123,32 @@ class AdminService {
 
     // Default: Grok Imagine Video 1.5 Lite
     let rate = 3;
-    if (job.resolution === '480p') rate = 2;
-    else if (job.resolution === '1080p') rate = 14;
-    return (dur * rate) + (job.referenceImageUrl ? 1 : 0);
+    if (resolution === '480p') rate = 2;
+    else if (resolution === '1080p') rate = 14;
+    return (dur * rate) + (hasImage ? 1 : 0);
+  }
+
+  // Guaranteed profitable retail charge to user
+  calculateUserCharge(wholesaleCredits: number): number {
+    return Math.ceil(wholesaleCredits * this.markupMultiplier) + this.basePlatformFeeCredits;
+  }
+
+  private calculateRunwayCostForJob(job: any): number {
+    if (typeof job.providerCostCredits === 'number' && job.providerCostCredits > 0) {
+      return job.providerCostCredits;
+    }
+    return this.calculateWholesaleCost(
+      job.modelId,
+      job.duration || 5,
+      job.resolution || '720p',
+      Boolean(job.referenceImageUrl)
+    );
   }
 
   getAuditSummary(): PlatformAuditSummary {
     const jobs = jobService.getAllJobs();
     const multiplier = this.markupMultiplier;
+    const baseFee = this.basePlatformFeeCredits;
 
     let totalRunwayCostCredits = 0;
     let totalUserChargedCredits = 0;
@@ -96,12 +186,18 @@ class AdminService {
       else if (isFail) failedJobs++;
       else if (isProc) processingJobs++;
 
-      // If failed, provider usually does not charge or charges 0
-      const runwayCredits = isFail ? 0 : this.calculateRunwayCost(job);
+      // If failed, provider usually does not charge
+      const runwayCredits = isFail ? 0 : this.calculateRunwayCostForJob(job);
       const runwayCostUsd = Math.round(runwayCredits * 0.01 * 100) / 100; // $0.01 per credit
 
-      const userCredits = isFail ? 0 : (job.creditsUsed || runwayCredits);
-      const userChargedUsd = Math.round(userCredits * 0.01 * multiplier * 100) / 100;
+      // What user was charged (guaranteed profitable formula)
+      let userCredits = isFail ? 0 : (job.creditsUsed || this.calculateUserCharge(runwayCredits));
+      if (!isFail && userCredits < runwayCredits) {
+        userCredits = this.calculateUserCharge(runwayCredits);
+      }
+
+      // Retail pricing: average package selling price is $0.016 / credit ($29 for 1800c)
+      const userChargedUsd = Math.round(userCredits * 0.016 * 100) / 100;
       const marginUsd = Math.round((userChargedUsd - runwayCostUsd) * 100) / 100;
 
       totalRunwayCostCredits += runwayCredits;
@@ -151,7 +247,7 @@ class AdminService {
     });
 
     const totalRunwayCostUsd = Math.round(totalRunwayCostCredits * 0.01 * 100) / 100;
-    const totalUserChargedUsd = Math.round(totalUserChargedCredits * 0.01 * multiplier * 100) / 100;
+    const totalUserChargedUsd = Math.round(totalUserChargedCredits * 0.016 * 100) / 100;
     const netProfitUsd = Math.round((totalUserChargedUsd - totalRunwayCostUsd) * 100) / 100;
     const marginPercentage = totalUserChargedUsd > 0 
       ? Math.round((netProfitUsd / totalUserChargedUsd) * 1000) / 10 
@@ -159,7 +255,7 @@ class AdminService {
 
     const modelStats: ModelAuditStat[] = Array.from(modelMap.values()).map(m => {
       const runwayUsd = Math.round(m.runwayCostCredits * 0.01 * 100) / 100;
-      const userUsd = Math.round(m.userChargedCredits * 0.01 * multiplier * 100) / 100;
+      const userUsd = Math.round(m.userChargedCredits * 0.016 * 100) / 100;
       return {
         modelId: m.modelId,
         modelName: m.modelName,
@@ -185,6 +281,7 @@ class AdminService {
       netProfitUsd,
       marginPercentage,
       markupMultiplier: multiplier,
+      basePlatformFeeCredits: baseFee,
       modelStats,
       jobs: detailedJobs,
     };

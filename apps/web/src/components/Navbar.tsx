@@ -1,4 +1,4 @@
-import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music, ShieldCheck } from 'lucide-react';
+import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music, ShieldCheck, PlusCircle } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
@@ -8,6 +8,7 @@ interface NavbarProps {
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
   onOpenSettings: () => void;
+  onOpenPricing?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeJobsCount,
   onOpenJobDrawer,
   onOpenSettings,
+  onOpenPricing,
 }) => {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 glass-panel bg-background/80 backdrop-blur-md">
@@ -133,11 +135,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          {/* Credits Badge */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-teal-950/40 border border-teal-500/30 text-teal-300 text-sm font-medium">
-            <Coins className="w-4 h-4 text-teal-400" />
-            <span>{credits ? credits.available : '...'}</span>
-            <span className="text-xs text-teal-400/60 font-normal">credits</span>
+          {/* Credits Badge with Top Up */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onOpenPricing}
+              title="Click to view pricing & top up credits"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-950/40 hover:bg-teal-900/50 border border-teal-500/30 hover:border-teal-400 text-teal-300 text-sm font-medium transition-all cursor-pointer shadow-sm shadow-teal-950/20"
+            >
+              <Coins className="w-4 h-4 text-teal-400" />
+              <span className="font-mono font-bold">{credits ? credits.available : '...'}</span>
+              <span className="text-xs text-teal-400/70 font-normal">credits</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenPricing}
+              className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-400 text-slate-950 text-xs font-bold shadow-sm shadow-teal-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Top Up</span>
+            </button>
           </div>
 
           {/* Settings API Keys Button */}

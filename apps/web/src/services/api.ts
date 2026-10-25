@@ -206,3 +206,32 @@ export async function checkRunwayStatus(): Promise<{ ok: boolean; latencyMs: num
   if (!res.ok) throw new Error(data.error || 'Failed to test Runway status');
   return data.data;
 }
+
+export async function fetchCreditPackages(): Promise<any[]> {
+  const res = await fetch(`${BASE_URL}/admin/packages`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch packages');
+  return data.data || [];
+}
+
+export async function purchaseCreditPackage(packageId: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/packages/purchase`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ packageId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to purchase package');
+  return data.data;
+}
+
+export async function setBasePlatformFee(fee: number): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/base-fee`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fee }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update base fee');
+  return data.data;
+}

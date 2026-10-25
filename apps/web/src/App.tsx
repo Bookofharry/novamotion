@@ -15,6 +15,7 @@ import {
   GenerateVideoRequest 
 } from '@videolab/shared';
 import { AdminStudio } from './components/AdminStudio.js';
+import { PricingModal } from './components/PricingModal.js';
 import { 
   fetchModels, 
   fetchCredits, 
@@ -32,6 +33,7 @@ export function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJobDrawerOpen, setIsJobDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [activeVideo, setActiveVideo] = useState<{
     url?: string;
     thumb?: string;
@@ -153,6 +155,7 @@ export function App() {
         activeJobsCount={activeJobs.length}
         onOpenJobDrawer={() => setIsJobDrawerOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenPricing={() => setIsPricingOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -267,6 +270,16 @@ export function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Credit Top-Up Pricing Modal */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
+        onCreditPurchased={async () => {
+          const creds = await fetchCredits();
+          setCredits(creds);
+        }}
       />
     </div>
   );

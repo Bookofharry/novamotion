@@ -59,6 +59,49 @@ adminRouter.post('/markup', (req, res) => {
   }
 });
 
+// Configure base platform processing fee
+adminRouter.post('/base-fee', (req, res) => {
+  try {
+    const { fee } = req.body;
+    if (typeof fee !== 'number' || fee < 0) {
+      return res.status(400).json({ success: false, error: 'fee must be a positive number' });
+    }
+    const updated = adminService.setBasePlatformFee(fee);
+    res.json({
+      success: true,
+      message: `Updated base platform processing fee to ${updated} credits`,
+      data: { basePlatformFeeCredits: updated },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// List retail credit packages
+adminRouter.get('/packages', (req, res) => {
+  import('../services/admin.service.js').then(({ CREDIT_PACKAGES }) => {
+    res.json({
+      success: true,
+      data: CREDIT_PACKAGES,
+    });
+  });
+});
+
+// Purchase / top-up credit package
+adminRouter.post('/packages/purchase', (req, res) => {
+  try {
+    const { packageId } = req.body;
+    const result = adminService.purchasePackage(packageId);
+    res.json({
+      success: true,
+      message: `Successfully purchased ${result.pkg.name} (+${result.pkg.credits} credits)!`,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Manually sync/re-poll a job from Runway to get exact cost & output
 adminRouter.post('/jobs/:id/sync', async (req, res) => {
   try {
