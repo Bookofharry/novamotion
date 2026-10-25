@@ -1,9 +1,9 @@
-import { Video, Sparkles, Layers, Coins, Settings, ShieldCheck, PlusCircle } from 'lucide-react';
+import { Video, Sparkles, History, Coins, Settings, ShieldCheck, PlusCircle } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
-  activeTab: 'studio' | 'gallery' | 'admin';
-  setActiveTab: (tab: 'studio' | 'gallery' | 'admin') => void;
+  activeTab: 'studio' | 'history' | 'admin';
+  setActiveTab: (tab: 'studio' | 'history' | 'admin') => void;
   credits: UserCredits | null;
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 VideoLab
               </span>
               <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold bg-teal-500/20 text-teal-300 rounded border border-teal-500/30">
-                AI Video Studio
+                AI Studio
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">Text & Image to Cinematic Video</p>
@@ -53,18 +53,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            Studio
+            Generate Video
           </button>
           <button
-            onClick={() => setActiveTab('gallery')}
+            onClick={() => setActiveTab('history')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'gallery'
+              activeTab === 'history'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            Creations
+            <History className="w-3.5 h-3.5" />
+            Video History
           </button>
           <button
             onClick={() => setActiveTab('admin')}

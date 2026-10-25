@@ -30,6 +30,7 @@ interface PromptStudioProps {
   onSelectModel: (model: VideoModelInfo) => void;
   onSubmit: (request: GenerateVideoRequest) => Promise<void>;
   isSubmitting: boolean;
+  initialValues?: Partial<GenerateVideoRequest> | null;
 }
 
 const ALL_ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] = [
@@ -53,6 +54,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   onSelectModel,
   onSubmit,
   isSubmitting,
+  initialValues,
 }) => {
   const activeModel = selectedModel || models[0];
 
@@ -70,6 +72,18 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   const [selectedCamera, setSelectedCamera] = useState<'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'drone-shot' | 'orbital'>('zoom-in');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load initialValues (e.g. from history remix)
+  useEffect(() => {
+    if (!initialValues) return;
+    if (initialValues.prompt) setPrompt(initialValues.prompt);
+    if (initialValues.enhancedPrompt) setEnhancedPrompt(initialValues.enhancedPrompt);
+    if (initialValues.negativePrompt) setNegativePrompt(initialValues.negativePrompt);
+    if (initialValues.referenceImageUrl) setReferenceImageUrl(initialValues.referenceImageUrl);
+    if (initialValues.aspectRatio) setAspectRatio(initialValues.aspectRatio);
+    if (initialValues.duration) setDuration(initialValues.duration);
+    if (initialValues.resolution) setResolution(initialValues.resolution);
+  }, [initialValues]);
 
   // Synchronize defaults when active model changes
   useEffect(() => {

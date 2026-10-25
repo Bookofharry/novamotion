@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Play, Layers, Sparkles } from 'lucide-react';
+import { Sparkles, History, ArrowRight } from 'lucide-react';
 import { Navbar } from './components/Navbar.js';
 import { PromptStudio } from './components/PromptStudio.js';
 import { VideoPlayer } from './components/VideoPlayer.js';
 import { JobDrawer } from './components/JobDrawer.js';
-import { VideoGallery } from './components/VideoGallery.js';
+import { VideoHistory } from './components/VideoHistory.js';
 import { SettingsModal } from './components/SettingsModal.js';
 import { 
   VideoModelInfo, 
@@ -23,7 +23,7 @@ import {
 } from './services/api.js';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'gallery' | 'admin'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'history' | 'admin'>('studio');
   const [models, setModels] = useState<VideoModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<VideoModelInfo | null>(null);
   const [credits, setCredits] = useState<UserCredits | null>(null);
@@ -32,6 +32,7 @@ export function App() {
   const [isJobDrawerOpen, setIsJobDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [remixValues, setRemixValues] = useState<Partial<GenerateVideoRequest> | null>(null);
   const [activeVideo, setActiveVideo] = useState<{
     url?: string;
     thumb?: string;
@@ -181,18 +182,19 @@ export function App() {
                 onSelectModel={setSelectedModel}
                 onSubmit={handleGenerateSubmit}
                 isSubmitting={isSubmitting}
+                initialValues={remixValues}
               />
             </div>
 
-            {/* Right 5 Columns: Video Player Preview Canvas & Recent Creations */}
-            <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-20">
+            {/* Right 5 Columns: Video Player Preview Canvas */}
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
               
               {/* Preview Canvas Stage */}
               <div className="glass-panel rounded-2xl border border-white/10 p-4 space-y-3 shadow-xl bg-surface-elevated/70">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse" />
-                    <h3 className="font-display font-bold text-sm text-white">Preview Stage</h3>
+                    <h3 className="font-display font-bold text-sm text-white">Live Preview Stage</h3>
                   </div>
                   {activeVideo.title && (
                     <span className="text-[11px] text-slate-400 font-mono truncate max-w-[200px]" title={activeVideo.title}>
@@ -229,67 +231,49 @@ export function App() {
                 />
               </div>
 
-              {/* Recent Creations Shelf */}
-              {jobs.filter(j => j.status === 'COMPLETED' && j.resultVideoUrl).length > 0 && (
-                <div className="glass-panel rounded-2xl border border-white/10 p-4 space-y-3 bg-surface-elevated/40">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-teal-400" />
-                      Recent Creations
-                    </h4>
-                    <button
-                      onClick={() => setActiveTab('gallery')}
-                      className="text-[11px] text-teal-400 hover:text-teal-300 font-medium transition-colors"
-                    >
-                      View all ({jobs.filter(j => j.status === 'COMPLETED' && j.resultVideoUrl).length}) →
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {jobs
-                      .filter(j => j.status === 'COMPLETED' && j.resultVideoUrl)
-                      .slice(0, 3)
-                      .map((job) => {
-                        const isActive = activeVideo.url === job.resultVideoUrl;
-                        return (
-                          <div
-                            key={job.id}
-                            onClick={() => handleSelectJobForPlayer(job)}
-                            className={`group relative aspect-video rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                              isActive
-                                ? 'border-teal-400 ring-2 ring-teal-500/30 shadow-md'
-                                : 'border-white/10 hover:border-white/30'
-                            }`}
-                          >
-                            <img
-                              src={job.thumbnailUrl || 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=60'}
-                              alt={job.prompt}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-center justify-center transition-colors">
-                              <div className="w-6 h-6 rounded-full bg-teal-500/90 text-slate-950 flex items-center justify-center shadow">
-                                <Play className="w-3 h-3 fill-current translate-x-0.5" />
-                              </div>
-                            </div>
-                            <div className="absolute bottom-1 right-1 px-1 py-0.2 bg-black/80 text-[9px] font-mono text-white rounded">
-                              {job.duration || 5}s
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+              {/* History Gateway Card */}
+              <div className="glass-panel rounded-xl border border-white/10 p-3.5 bg-surface-elevated/40 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <History className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                  <span>All completed renders are preserved in your archive.</span>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className="text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1 transition-colors flex-shrink-0 ml-2"
+                >
+                  <span>Video History ({jobs.filter(j => j.status === 'COMPLETED').length})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
 
             </div>
 
           </div>
         )}
 
-        {activeTab === 'gallery' && (
-          <VideoGallery
+        {activeTab === 'history' && (
+          <VideoHistory
             jobs={jobs}
-            onSelectVideo={handleSelectJobForPlayer}
+            onSelectVideoForPlayer={(job) => {
+              handleSelectJobForPlayer(job);
+              setActiveTab('studio');
+            }}
+            onRemixInStudio={(job) => {
+              const model = models.find(m => m.id === job.modelId);
+              if (model) setSelectedModel(model);
+              setRemixValues({
+                prompt: job.prompt,
+                enhancedPrompt: job.enhancedPrompt,
+                referenceImageUrl: job.referenceImageUrl,
+                aspectRatio: job.aspectRatio,
+                duration: job.duration,
+                resolution: job.resolution,
+              });
+              setActiveTab('studio');
+            }}
+            onGoToStudio={() => setActiveTab('studio')}
+            onRefreshJobs={refreshJobs}
           />
         )}
 
