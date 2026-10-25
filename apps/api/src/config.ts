@@ -7,8 +7,8 @@ export const CONFIG = {
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 4000,
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   NODE_ENV: process.env.NODE_ENV || 'development',
-  RUNWAY_API_KEY: process.env.RUNWAY_API_KEY || '',
-  GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY || '',
+  RUNWAY_API_KEY: process.env.RUNWAY_API_KEY || process.env.RUNWAYML_API_SECRET || '',
+  GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '',
 };
 
 export const AVAILABLE_MODELS: VideoModelInfo[] = [
