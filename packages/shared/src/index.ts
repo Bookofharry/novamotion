@@ -85,3 +85,40 @@ export interface UserCredits {
   used: number;
   available: number;
 }
+
+export type TransitionType = 'cut' | 'crossfade' | 'fade-to-black';
+
+export interface MergeClipsRequest {
+  videoUrls: string[];
+  outputName?: string;
+  transition?: TransitionType;
+}
+
+export interface TrimClipRequest {
+  videoUrl: string;
+  startSec: number;
+  durationSec: number;
+}
+
+export interface CompositionResult {
+  outputVideoUrl: string;
+  durationSec?: number;
+  fileSizeBytes?: number;
+}
+
+export interface AudioTrackInfo {
+  id: string;
+  title: string;
+  category: 'cinematic' | 'cyberpunk' | 'ambient' | 'action' | 'lofi' | 'scifi';
+  mood: string;
+  durationSec: number;
+  audioUrl: string;
+}
+
+export interface AddAudioRequest {
+  videoUrl: string;
+  audioTrackId?: string;
+  audioUrl?: string;
+  volume?: number; // 0.0 to 1.0
+  loopAudio?: boolean;
+}

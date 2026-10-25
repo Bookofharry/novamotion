@@ -28,7 +28,7 @@ RUN npm run build --workspace=@videolab/api
 # --- Production Runner Stage ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat ffmpeg
 
 WORKDIR /app
 

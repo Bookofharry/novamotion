@@ -18,6 +18,18 @@
 - **✨ AI Prompt Enhancer**:
   - Automatically transforms short, rough ideas into rich, cinematic prompts with camera movements, dynamic lighting, color grading, and lens specifications tailored to video models.
 
+- **🎞️ Multi-Clip Sequencer & FFmpeg Stitcher**:
+  - Sequence multiple generated AI video clips on an interactive timeline strip.
+  - Interactive clip trimming (custom start offset and duration) and clip reordering.
+  - Seamless transition rendering (`Direct Cut`, `Crossfade Dissolve`, `Fade to Black`).
+  - Server-side FFmpeg concatenation pipeline with graceful dev-mode fallback.
+
+- **🎵 Audio & Sound Effects Studio**:
+  - Overcome silent AI video generation with procedural and curated soundscapes.
+  - Preset soundtracks: *Neon Cyberpunk Pulse*, *Ethereal Cinematic Drone*, *Deep Ocean & Rain*, *Epic Trailer Impact*, *Midnight Lo-Fi*, and *Deep Space Frequencies*.
+  - Procedural 44.1kHz 16-bit PCM waveform synthesis engine.
+  - FFmpeg audio multiplexing with volume normalization, looping, and instant canvas playback.
+
 - **🖥️ Cyber-Dark Studio UI**:
   - Modern, dark-mode, glassmorphic workstation with sleek micro-interactions.
   - Real-time generation job drawer & status indicator.

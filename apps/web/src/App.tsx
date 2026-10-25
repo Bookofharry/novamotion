@@ -6,6 +6,8 @@ import { JobDrawer } from './components/JobDrawer.js';
 import { VideoGallery } from './components/VideoGallery.js';
 import { ModelStatus } from './components/ModelStatus.js';
 import { SettingsModal } from './components/SettingsModal.js';
+import { ClipSequencer } from './components/ClipSequencer.js';
+import { AudioStudio } from './components/AudioStudio.js';
 import { 
   VideoModelInfo, 
   VideoJob, 
@@ -21,7 +23,7 @@ import {
 } from './services/api.js';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'gallery' | 'models'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'gallery' | 'models' | 'sequencer' | 'audio'>('studio');
   const [models, setModels] = useState<VideoModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<VideoModelInfo | null>(null);
   const [credits, setCredits] = useState<UserCredits | null>(null);
@@ -198,6 +200,34 @@ export function App() {
           <VideoGallery
             jobs={jobs}
             onSelectVideo={handleSelectJobForPlayer}
+          />
+        )}
+
+        {activeTab === 'sequencer' && (
+          <ClipSequencer
+            jobs={jobs}
+            onPlayComposite={(videoUrl, title) => {
+              setActiveVideo({
+                url: videoUrl,
+                ratio: '16:9',
+                title,
+              });
+              setActiveTab('studio');
+            }}
+          />
+        )}
+
+        {activeTab === 'audio' && (
+          <AudioStudio
+            jobs={jobs}
+            onPlayEnhancedVideo={(videoUrl, title) => {
+              setActiveVideo({
+                url: videoUrl,
+                ratio: '16:9',
+                title,
+              });
+              setActiveTab('studio');
+            }}
           />
         )}
 

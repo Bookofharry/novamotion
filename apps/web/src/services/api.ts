@@ -5,7 +5,11 @@ import {
   EnhancePromptRequest, 
   EnhancePromptResponse,
   Project,
-  UserCredits 
+  UserCredits,
+  TransitionType,
+  CompositionResult,
+  AudioTrackInfo,
+  AddAudioRequest
 } from '@videolab/shared';
 
 const BASE_URL = '/api/v1';
@@ -110,4 +114,42 @@ export async function updateProviderKeys(keys: { runwayKey?: string; googleKey?:
   }
 }
 
+export async function mergeClips(videoUrls: string[], transition: TransitionType = 'cut'): Promise<CompositionResult> {
+  const res = await fetch(`${BASE_URL}/composition/merge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoUrls, transition }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to merge video clips');
+  return data.data;
+}
 
+export async function trimClip(videoUrl: string, startSec: number, durationSec: number): Promise<CompositionResult> {
+  const res = await fetch(`${BASE_URL}/composition/trim`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ videoUrl, startSec, durationSec }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to trim video clip');
+  return data.data;
+}
+
+export async function fetchAudioTracks(): Promise<AudioTrackInfo[]> {
+  const res = await fetch(`${BASE_URL}/composition/audio-tracks`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to load audio tracks');
+  return data.data || [];
+}
+
+export async function addAudioToVideo(params: AddAudioRequest): Promise<CompositionResult> {
+  const res = await fetch(`${BASE_URL}/composition/add-audio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to attach audio soundtrack');
+  return data.data;
+}

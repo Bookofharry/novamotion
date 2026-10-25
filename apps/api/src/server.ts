@@ -9,6 +9,7 @@ import { projectsRouter } from './routes/projects.routes.js';
 import { creditsRouter } from './routes/credits.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
 import { settingsRouter } from './routes/settings.routes.js';
+import { compositionRouter } from './routes/composition.routes.js';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/credits', creditsRouter);
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/settings', settingsRouter);
+app.use('/api/v1/composition', compositionRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

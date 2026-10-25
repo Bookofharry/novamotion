@@ -1,10 +1,10 @@
 import React from 'react';
-import { Video, Sparkles, Layers, Coins, Activity, Settings } from 'lucide-react';
+import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
-  activeTab: 'studio' | 'gallery' | 'models';
-  setActiveTab: (tab: 'studio' | 'gallery' | 'models') => void;
+  activeTab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio';
+  setActiveTab: (tab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio') => void;
   credits: UserCredits | null;
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
@@ -45,36 +45,58 @@ export const Navbar: React.FC<NavbarProps> = ({
         <nav className="flex items-center gap-1 bg-surface-elevated/70 p-1 rounded-xl border border-white/5">
           <button
             onClick={() => setActiveTab('studio')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'studio'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3.5 h-3.5" />
             Studio
           </button>
           <button
+            onClick={() => setActiveTab('sequencer')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              activeTab === 'sequencer'
+                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Clapperboard className="w-3.5 h-3.5" />
+            Sequencer
+          </button>
+          <button
+            onClick={() => setActiveTab('audio')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              activeTab === 'audio'
+                ? 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-purple-300 border border-purple-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Music className="w-3.5 h-3.5" />
+            Soundtrack Studio
+          </button>
+          <button
             onClick={() => setActiveTab('gallery')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'gallery'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            Video Library
+            <Layers className="w-3.5 h-3.5" />
+            Library
           </button>
           <button
             onClick={() => setActiveTab('models')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'models'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Activity className="w-4 h-4" />
-            Model Status
+            <Activity className="w-3.5 h-3.5" />
+            Models
           </button>
         </nav>
 
