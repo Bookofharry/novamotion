@@ -581,7 +581,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
               Duration*
             </label>
-            <div className={`grid gap-1.5 ${activeModel?.supportedDurations.length >= 5 ? 'grid-cols-5' : activeModel?.supportedDurations.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+            <div className={`grid gap-1.5 ${activeModel?.supportedDurations.length >= 5 ? 'grid-cols-3' : activeModel?.supportedDurations.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
               {activeModel?.supportedDurations.map((d) => (
                 <button
                   key={d}
