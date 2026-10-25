@@ -11,7 +11,10 @@
     "dev": "concurrently \"npm run dev --workspace=@videolab/api\" \"npm run dev --workspace=@videolab/web\"",
     "dev:api": "npm run dev --workspace=@videolab/api",
     "dev:web": "npm run dev --workspace=@videolab/web",
-    "build": "npm run build --workspace=@videolab/shared && npm run build --workspace=@videolab/api && npm run build --workspace=@videolab/web"
+    "build": "npm run build --workspace=@videolab/shared && npm run build --workspace=@videolab/api && npm run build --workspace=@videolab/web",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

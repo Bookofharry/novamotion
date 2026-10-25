@@ -32,3 +32,44 @@
 - **Backend**: Node.js, Express.js, TypeScript, REST API
 - **Data & Queue**: Prisma ORM, PostgreSQL / SQLite dev fallback, Redis & BullMQ
 - **AI Integrations**: Provider Adapter Interface (Google Veo, Runway, Mock) & LLM Prompt Enhancer
+
+---
+
+## 🐳 Quick Start with Docker
+
+Start the entire platform (Web, API Gateway, PostgreSQL, and Redis) with a single command:
+
+```bash
+# 1. Start all containers with Docker Compose
+docker compose up --build -d
+
+# Or via npm script:
+npm run docker:up
+
+# 2. View running logs
+docker compose logs -f
+
+# 3. Stop all containers
+docker compose down
+```
+
+### Service Map:
+- **Web Studio**: [http://localhost:3000](http://localhost:3000) (Nginx SPA + Reverse Proxy)
+- **API Server & Health**: [http://localhost:4000/health](http://localhost:4000/health)
+- **PostgreSQL**: `localhost:5432` (`user: videolab`, `db: videolab`)
+- **Redis Queue**: `localhost:6379`
+
+---
+
+## 💻 Running Locally (Without Docker)
+
+```bash
+# 1. Install all monorepo dependencies
+npm install
+
+# 2. Build shared packages
+npm run build --workspace=@videolab/shared
+
+# 3. Start development servers concurrently (API on 4000, Vite Web on 5173)
+npm run dev
+```

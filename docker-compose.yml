@@ -1,0 +1,73 @@
+services:
+  # --- Web Client (React + Nginx) ---
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: videolab-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # --- API Gateway & Orchestrator ---
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: videolab-api
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - CLIENT_URL=http://localhost:3000
+      - DATABASE_URL=postgresql://videolab:videolab_secret@postgres:5432/videolab
+      - REDIS_URL=redis://redis:6379
+      - RUNWAY_API_KEY=${RUNWAY_API_KEY:-}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- Persistence Layer (PostgreSQL) ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: videolab-postgres
+    environment:
+      POSTGRES_USER: videolab
+      POSTGRES_PASSWORD: videolab_secret
+      POSTGRES_DB: videolab
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U videolab -d videolab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Background Queue Engine (Redis) ---
+  redis:
+    image: redis:7-alpine
+    container_name: videolab-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
