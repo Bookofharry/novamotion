@@ -8,14 +8,14 @@ import {
   ChevronDown, 
   ChevronUp, 
   Zap,
-  Info,
   Upload,
   X,
   Loader2,
   RotateCcw,
   AlertCircle,
   Cpu,
-  ChevronRight
+  ChevronRight,
+  Coins
 } from 'lucide-react';
 import { 
   AspectRatio, 
@@ -650,52 +650,53 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
           )}
         </div>
 
-        {/* Submit & Result Summary Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10">
-          <div className="space-y-0.5 text-left w-full sm:w-auto">
+        {/* Submit & Result Summary Bar (Ultra-Compact Single-Row) */}
+        <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-white/10">
+          <div className="flex items-center gap-2 overflow-hidden">
             <div className="flex items-center gap-1.5 text-xs text-slate-300">
-              <Info className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
-              <span>
-                Generation fee: <strong className="text-teal-300 font-mono text-xs">{costInfo.total} credits</strong>
-                <span className="text-slate-400 text-[10px] ml-1 font-normal">
-                  ({costInfo.wholesale} GPU compute + {costInfo.platformFee} platform)
-                </span>
+              <Coins className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+              <span className="whitespace-nowrap text-[11px] sm:text-xs">
+                Fee: <strong className="text-teal-300 font-mono">{costInfo.total} credits</strong>
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono pl-5">
-              Wholesale base: {costInfo.subtext}
-            </p>
+            <span 
+              className="text-[10px] text-slate-500 font-mono truncate hidden sm:inline cursor-help" 
+              title={`Wholesale: ${costInfo.subtext} (${costInfo.wholesale} GPU compute + ${costInfo.platformFee} platform orchestration)`}
+            >
+              • {costInfo.rateLabel}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               type="button"
               onClick={handleReset}
-              className="px-3 py-2 rounded-lg border border-white/10 hover:border-white/20 bg-surface-elevated text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1"
+              title="Reset prompt and parameters"
+              className="px-2.5 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-surface-elevated text-slate-400 hover:text-white text-[11px] font-semibold transition-all flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
-              Reset
+              <span>Reset</span>
             </button>
 
             <button
               type="submit"
               disabled={(!prompt.trim() && !referenceImageUrl.trim()) || (isGen4 && !referenceImageUrl.trim()) || isSubmitting}
-              className="flex-1 sm:flex-none px-5 py-2 rounded-lg bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-teal-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-teal-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                   Generating...
                 </>
               ) : isGen4 || referenceImageUrl ? (
                 <>
                   <ImageIcon className="w-3.5 h-3.5 font-bold" />
-                  Run ({activeModel?.name || 'Image-to-Video'})
+                  Generate
                 </>
               ) : (
                 <>
                   <Video className="w-3.5 h-3.5 font-bold" />
-                  Run ({activeModel?.name || 'Generate Video'})
+                  Generate
                 </>
               )}
             </button>
