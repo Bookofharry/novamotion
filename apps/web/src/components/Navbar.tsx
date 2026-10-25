@@ -1,9 +1,9 @@
-import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music, ShieldCheck, PlusCircle } from 'lucide-react';
+import { Video, Sparkles, Layers, Coins, Settings, ShieldCheck, PlusCircle } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
-  activeTab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio' | 'admin';
-  setActiveTab: (tab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio' | 'admin') => void;
+  activeTab: 'studio' | 'gallery' | 'admin';
+  setActiveTab: (tab: 'studio' | 'gallery' | 'admin') => void;
   credits: UserCredits | null;
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
@@ -35,18 +35,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 VideoLab
               </span>
               <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold bg-teal-500/20 text-teal-300 rounded border border-teal-500/30">
-                Studio
+                AI Video Studio
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Provider-Independent Generative Video</p>
+            <p className="text-[11px] text-slate-400 font-medium">Text & Image to Cinematic Video</p>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 bg-surface-elevated/70 p-1 rounded-xl border border-white/5">
+        {/* Focused Video Generation Navigation Tabs */}
+        <nav className="flex items-center gap-1.5 bg-surface-elevated/70 p-1 rounded-xl border border-white/5">
           <button
             onClick={() => setActiveTab('studio')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'studio'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -56,52 +56,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             Studio
           </button>
           <button
-            onClick={() => setActiveTab('sequencer')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'sequencer'
-                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Clapperboard className="w-3.5 h-3.5" />
-            Sequencer
-          </button>
-          <button
-            onClick={() => setActiveTab('audio')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'audio'
-                ? 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 text-purple-300 border border-purple-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Music className="w-3.5 h-3.5" />
-            Soundtrack Studio
-          </button>
-          <button
             onClick={() => setActiveTab('gallery')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'gallery'
                 ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Library
-          </button>
-          <button
-            onClick={() => setActiveTab('models')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'models'
-                ? 'bg-gradient-to-r from-teal-500/20 to-cyan-500/20 text-teal-300 border border-teal-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            Models
+            Creations
           </button>
           <button
             onClick={() => setActiveTab('admin')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'admin'
                 ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/25 text-emerald-300 border border-emerald-500/50 shadow-sm'
                 : 'text-emerald-400/90 hover:text-emerald-300 hover:bg-emerald-500/10'
