@@ -1,0 +1,397 @@
+import React, { useState } from 'react';
+import { 
+  Sparkles, 
+  Wand2, 
+  Sliders, 
+  Image as ImageIcon, 
+  Video, 
+  ChevronDown, 
+  ChevronUp, 
+  Film,
+  Zap,
+  Info
+} from 'lucide-react';
+import { 
+  AspectRatio, 
+  VideoDuration, 
+  VideoResolution, 
+  VideoModelInfo, 
+  GenerateVideoRequest 
+} from '@videolab/shared';
+import { enhancePrompt } from '../services/api.js';
+
+interface PromptStudioProps {
+  models: VideoModelInfo[];
+  selectedModel: VideoModelInfo | null;
+  onSelectModel: (model: VideoModelInfo) => void;
+  onSubmit: (request: GenerateVideoRequest) => Promise<void>;
+  isSubmitting: boolean;
+}
+
+const ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] = [
+  { ratio: '16:9', label: 'Landscape (16:9)', iconClass: 'w-6 h-3.5 border-2' },
+  { ratio: '9:16', label: 'Portrait / Reels (9:16)', iconClass: 'w-3.5 h-6 border-2' },
+  { ratio: '1:1', label: 'Square (1:1)', iconClass: 'w-5 h-5 border-2' },
+  { ratio: '4:3', label: 'Standard (4:3)', iconClass: 'w-5.5 h-4 border-2' },
+  { ratio: '21:9', label: 'Ultrawide (21:9)', iconClass: 'w-7 h-3 border-2' },
+];
+
+const PRESET_PROMPTS = [
+  'A neon-lit cyberpunk samurai standing under rain in futuristic Neo-Tokyo alleyway',
+  'Majestic golden eagle soaring over snow-capped alpine mountains at sunrise',
+  'Underwater bioluminescent jellyfish dance in crystal clear deep ocean waters',
+  'Vintage matte black Porsche 911 speeding along coastal cliff highway at dusk',
+];
+
+export const PromptStudio: React.FC<PromptStudioProps> = ({
+  models,
+  selectedModel,
+  onSelectModel,
+  onSubmit,
+  isSubmitting,
+}) => {
+  const [prompt, setPrompt] = useState('');
+  const [enhancedPrompt, setEnhancedPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [referenceImageUrl, setReferenceImageUrl] = useState('');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [duration, setDuration] = useState<VideoDuration>(5);
+  const [resolution, setResolution] = useState<VideoResolution>('1080p');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<'cinematic' | 'cyberpunk' | 'photorealistic' | 'anime' | '3d-render'>('cinematic');
+  const [selectedCamera, setSelectedCamera] = useState<'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'drone-shot' | 'orbital'>('zoom-in');
+
+  const handleEnhance = async () => {
+    if (!prompt.trim()) return;
+    setIsEnhancing(true);
+    try {
+      const res = await enhancePrompt({
+        prompt,
+        stylePreset: selectedStyle,
+        cameraMovement: selectedCamera,
+      });
+      setEnhancedPrompt(res.enhancedPrompt);
+      if (!negativePrompt) {
+        setNegativePrompt(res.suggestedNegativePrompt);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim() || !selectedModel || isSubmitting) return;
+
+    await onSubmit({
+      prompt: prompt.trim(),
+      enhancedPrompt: enhancedPrompt.trim() || undefined,
+      negativePrompt: negativePrompt.trim() || undefined,
+      referenceImageUrl: referenceImageUrl.trim() || undefined,
+      modelId: selectedModel.id,
+      aspectRatio,
+      duration,
+      resolution,
+    });
+  };
+
+  const currentCost = (selectedModel?.costPerSecond || 1) * duration;
+
+  return (
+    <div className="w-full space-y-6">
+      <form onSubmit={handleGenerate} className="glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
+        
+        {/* Model Selector Bar */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Generative Model Provider
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {models.map((m) => {
+              const isSelected = selectedModel?.id === m.id;
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => onSelectModel(m)}
+                  className={`cursor-pointer rounded-xl p-3.5 border transition-all text-left flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-teal-500/15 to-teal-950/30 border-teal-500/50 shadow-md shadow-teal-500/10'
+                      : 'bg-surface-elevated/40 border-white/5 hover:border-white/20 hover:bg-surface-elevated/70'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-sm text-slate-200">{m.name}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
+                        m.provider === 'mock' 
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                          : m.provider === 'google' 
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
+                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                      }`}>
+                        {m.provider}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{m.description}</p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>{m.costPerSecond} credits/sec</span>
+                    {m.isDefault && <span className="text-teal-400 font-medium">★ Recommended</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Prompt Input & AI Enhancer */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Visual Prompt
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedStyle}
+                onChange={(e) => setSelectedStyle(e.target.value as any)}
+                className="bg-surface-elevated text-xs text-slate-300 rounded-lg px-2.5 py-1 border border-white/10 outline-none focus:border-teal-500"
+              >
+                <option value="cinematic">Cinematic</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="photorealistic">Photorealistic</option>
+                <option value="anime">Anime</option>
+                <option value="3d-render">3D Render</option>
+              </select>
+              <select
+                value={selectedCamera}
+                onChange={(e) => setSelectedCamera(e.target.value as any)}
+                className="bg-surface-elevated text-xs text-slate-300 rounded-lg px-2.5 py-1 border border-white/10 outline-none focus:border-teal-500"
+              >
+                <option value="zoom-in">Zoom In</option>
+                <option value="zoom-out">Zoom Out</option>
+                <option value="pan-left">Pan Left</option>
+                <option value="pan-right">Pan Right</option>
+                <option value="drone-shot">Drone Aerial</option>
+                <option value="orbital">Orbital 360</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleEnhance}
+                disabled={!prompt.trim() || isEnhancing}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-xs font-medium transition-all disabled:opacity-40"
+              >
+                <Wand2 className={`w-3.5 h-3.5 ${isEnhancing ? 'animate-spin' : ''}`} />
+                {isEnhancing ? 'Enhancing...' : '✨ Enhance Prompt'}
+              </button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <textarea
+              rows={3}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe your scene in detail... (e.g., A cinematic drone shot over ancient emerald waterfall ruins, golden dawn light)"
+              className="w-full bg-surface-elevated/80 border border-white/10 rounded-xl p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
+            />
+            <div className="absolute right-3 bottom-3 text-[10px] text-slate-500 font-mono">
+              {prompt.length} chars
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[11px] text-slate-500 flex items-center gap-1 mr-1">
+              <Zap className="w-3 h-3 text-amber-400" /> Ideas:
+            </span>
+            {PRESET_PROMPTS.map((sample, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setPrompt(sample)}
+                className="text-[11px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 px-2.5 py-0.5 rounded-full transition-colors border border-white/5 truncate max-w-[280px]"
+              >
+                {sample}
+              </button>
+            ))}
+          </div>
+
+          {/* Enhanced Prompt Display */}
+          {enhancedPrompt && (
+            <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1">
+              <div className="flex items-center justify-between text-xs font-semibold text-purple-300">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> AI Enhanced Cinematic Prompt
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setEnhancedPrompt('')}
+                  className="text-[10px] text-purple-400/70 hover:text-purple-300"
+                >
+                  Clear
+                </button>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed font-mono bg-black/30 p-2.5 rounded-lg border border-purple-500/10">
+                {enhancedPrompt}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Video Parameters Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+          
+          {/* Aspect Ratio */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Aspect Ratio
+            </label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {ASPECT_RATIOS.map((item) => {
+                const active = aspectRatio === item.ratio;
+                return (
+                  <button
+                    key={item.ratio}
+                    type="button"
+                    onClick={() => setAspectRatio(item.ratio)}
+                    title={item.label}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
+                      active
+                        ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-sm'
+                        : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    <div className={`rounded-sm mb-1.5 flex items-center justify-center ${item.iconClass} ${active ? 'border-teal-400' : 'border-slate-500'}`} />
+                    <span className="text-[10px] font-semibold">{item.ratio}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Duration
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[5, 10].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d as VideoDuration)}
+                  className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                    duration === d
+                      ? 'bg-teal-500/20 border-teal-500 text-teal-300'
+                      : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
+                  }`}
+                >
+                  <Film className="w-3.5 h-3.5" />
+                  {d} Seconds
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Resolution */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Resolution
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['720p', '1080p', '4k'] as VideoResolution[]).map((res) => (
+                <button
+                  key={res}
+                  type="button"
+                  onClick={() => setResolution(res)}
+                  className={`py-2 px-2 rounded-xl border text-xs font-semibold text-center transition-all ${
+                    resolution === res
+                      ? 'bg-teal-500/20 border-teal-500 text-teal-300'
+                      : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
+                  }`}
+                >
+                  {res}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Advanced Options Accordion */}
+        <div className="border-t border-white/10 pt-4">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Advanced Controls (Image-to-Video, Negative Prompt)</span>
+            {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+
+          {showAdvanced && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <label className="block text-xs text-slate-400 font-medium mb-1 flex items-center gap-1">
+                  <ImageIcon className="w-3.5 h-3.5" /> Reference Image URL (Image-to-Video)
+                </label>
+                <input
+                  type="url"
+                  value={referenceImageUrl}
+                  onChange={(e) => setReferenceImageUrl(e.target.value)}
+                  placeholder="https://example.com/character-frame.png"
+                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 font-medium mb-1">
+                  Negative Prompt (Elements to avoid)
+                </label>
+                <input
+                  type="text"
+                  value={negativePrompt}
+                  onChange={(e) => setNegativePrompt(e.target.value)}
+                  placeholder="e.g. morphing, jitter, artifacts, watermark"
+                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Submit Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
+            <span>
+              Estimated cost: <strong className="text-white font-mono">{currentCost} credits</strong> ({duration}s @ {selectedModel?.costPerSecond || 1}c/s)
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!prompt.trim() || isSubmitting}
+            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                Queueing Generation...
+              </>
+            ) : (
+              <>
+                <Video className="w-4 h-4 font-bold" />
+                Generate Video
+              </>
+            )}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  );
+};
