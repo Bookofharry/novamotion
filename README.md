@@ -64,7 +64,7 @@ Self-host NovaMotion locally with Docker Compose in 3 simple steps:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/novamotion.git
+git clone https://github.com/Bookofharry/novamotion.git
 cd novamotion
 ```
 

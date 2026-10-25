@@ -29,7 +29,7 @@ NovaMotion is organized as a monorepo using npm workspaces:
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/novamotion.git
+git clone https://github.com/Bookofharry/novamotion.git
 cd novamotion
 ```
 
