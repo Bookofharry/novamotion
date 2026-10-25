@@ -49,7 +49,16 @@ class JobService {
   async createJob(request: GenerateVideoRequest, model: VideoModelInfo): Promise<VideoJob> {
     const id = uuidv4();
     const now = new Date().toISOString();
-    const creditsUsed = request.duration * model.costPerSecond;
+
+    let ratePerSecond = model.costPerSecond;
+    if (request.resolution === '480p') ratePerSecond = 2;
+    else if (request.resolution === '720p') ratePerSecond = 3;
+    else if (request.resolution === '1080p') ratePerSecond = 14;
+
+    let creditsUsed = request.duration * ratePerSecond;
+    if (request.referenceImageUrl) {
+      creditsUsed += 1; // 1 credit for reference start frame
+    }
 
     const job: VideoJob = {
       id,

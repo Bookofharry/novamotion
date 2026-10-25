@@ -8,15 +8,35 @@ export class RunwayVideoProvider implements IVideoProvider {
     return CONFIG.RUNWAY_API_KEY;
   }
 
-  private mapAspectRatio(ratio: string): string {
-    if (ratio === '9:16') return '720:1280';
-    return '1280:720'; // default 16:9
+  private mapRatioAndResolution(aspectRatio: string, resolution: string): string {
+    const is480 = resolution === '480p';
+    const is1080 = resolution === '1080p';
+
+    if (is480) {
+      if (aspectRatio === '9:16') return '480:848';
+      if (aspectRatio === '1:1') return '480:480';
+      if (aspectRatio === '4:3') return '640:480';
+      return '848:480'; // 16:9 widescreen
+    }
+
+    if (is1080) {
+      if (aspectRatio === '9:16') return '1072:1904';
+      if (aspectRatio === '1:1') return '1424:1424';
+      if (aspectRatio === '4:3') return '1648:1232';
+      return '1904:1072'; // 16:9 widescreen
+    }
+
+    // Default: 720p
+    if (aspectRatio === '9:16') return '720:1280';
+    if (aspectRatio === '1:1') return '720:720';
+    if (aspectRatio === '4:3') return '960:720';
+    return '1280:720'; // 16:9 widescreen
   }
 
   async generateVideo(job: VideoJob, request: GenerateVideoRequest): Promise<ProviderInitiateResult> {
     if (!this.apiKey) {
       throw new Error(
-        'Runway API Key is missing. Please set RUNWAY_API_KEY in your environment or Settings modal, or use the VideoLab Ultra-Fast (Dev Mock) model.'
+        'Runway API Key is missing. Please set RUNWAY_API_KEY in your environment or Settings modal.'
       );
     }
 
@@ -26,18 +46,11 @@ export class RunwayVideoProvider implements IVideoProvider {
       ? 'https://api.dev.runwayml.com/v1/image_to_video' 
       : 'https://api.dev.runwayml.com/v1/text_to_video';
 
-    let modelName = 'grok_imagine_1_5_lite';
-    if (request.modelId === 'runway-gen4' || request.modelId === 'runway-gen3-alpha') {
-      modelName = 'gen4.5';
-    } else if (request.modelId === 'runway-lite' || request.modelId === 'runway-gen2') {
-      modelName = 'grok_imagine_1_5_lite';
-    }
-
     const payload: Record<string, any> = {
-      model: modelName,
+      model: 'grok_imagine_1_5_lite',
       promptText,
       duration: request.duration || 5,
-      ratio: this.mapAspectRatio(request.aspectRatio),
+      ratio: this.mapRatioAndResolution(request.aspectRatio, request.resolution),
     };
 
     if (isImageToVideo) {

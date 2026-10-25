@@ -7,13 +7,12 @@ import {
   Video, 
   ChevronDown, 
   ChevronUp, 
-  Film,
   Zap,
   Info,
   Upload,
   X,
   Loader2,
-  CheckCircle2
+  RotateCcw
 } from 'lucide-react';
 import { 
   AspectRatio, 
@@ -37,20 +36,19 @@ const ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] 
   { ratio: '9:16', label: 'Portrait / Reels (9:16)', iconClass: 'w-3.5 h-6 border-2' },
   { ratio: '1:1', label: 'Square (1:1)', iconClass: 'w-5 h-5 border-2' },
   { ratio: '4:3', label: 'Standard (4:3)', iconClass: 'w-5.5 h-4 border-2' },
-  { ratio: '21:9', label: 'Ultrawide (21:9)', iconClass: 'w-7 h-3 border-2' },
 ];
 
 const PRESET_PROMPTS = [
+  'A majestic white dove soaring peacefully across a radiant sunrise sky above calm sapphire waters',
   'A neon-lit cyberpunk samurai standing under rain in futuristic Neo-Tokyo alleyway',
-  'Majestic golden eagle soaring over snow-capped alpine mountains at sunrise',
   'Underwater bioluminescent jellyfish dance in crystal clear deep ocean waters',
-  'Vintage matte black Porsche 911 speeding along coastal cliff highway at dusk',
+  'Vintage matte black sports car accelerating along coastal cliff highway at golden hour',
 ];
 
 export const PromptStudio: React.FC<PromptStudioProps> = ({
   models,
   selectedModel,
-  onSelectModel,
+  onSelectModel: _onSelectModel,
   onSubmit,
   isSubmitting,
 }) => {
@@ -60,7 +58,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   const [referenceImageUrl, setReferenceImageUrl] = useState('');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [duration, setDuration] = useState<VideoDuration>(5);
-  const [resolution, setResolution] = useState<VideoResolution>('1080p');
+  const [resolution, setResolution] = useState<VideoResolution>('720p');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -121,72 +119,175 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     }
   };
 
+  const handleReset = () => {
+    setPrompt('');
+    setEnhancedPrompt('');
+    setNegativePrompt('');
+    setReferenceImageUrl('');
+    setAspectRatio('16:9');
+    setDuration(5);
+    setResolution('720p');
+    setShowAdvanced(false);
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim() || !selectedModel || isSubmitting) return;
+    const activeModel = selectedModel || models[0];
+    if (!prompt.trim() || !activeModel || isSubmitting) return;
 
     await onSubmit({
       prompt: prompt.trim(),
       enhancedPrompt: enhancedPrompt.trim() || undefined,
       negativePrompt: negativePrompt.trim() || undefined,
       referenceImageUrl: referenceImageUrl.trim() || undefined,
-      modelId: selectedModel.id,
+      modelId: activeModel.id,
       aspectRatio,
       duration,
       resolution,
     });
   };
 
-  const currentCost = (selectedModel?.costPerSecond || 1) * duration;
+  const getCostPerSecond = (res: VideoResolution) => {
+    if (res === '480p') return 2;
+    if (res === '720p') return 3;
+    if (res === '1080p') return 14;
+    return 3;
+  };
+
+  const currentCost = (duration * getCostPerSecond(resolution)) + (referenceImageUrl ? 1 : 0);
+  const activeModel = selectedModel || models[0];
 
   return (
     <div className="w-full space-y-6">
       <form onSubmit={handleGenerate} className="glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
         
-        {/* Model Selector Bar */}
+        {/* Generative Model Provider Card */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Generative Model Provider
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {models.map((m) => {
-              const isSelected = selectedModel?.id === m.id;
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => onSelectModel(m)}
-                  className={`cursor-pointer rounded-xl p-3.5 border transition-all text-left flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-gradient-to-b from-teal-500/15 to-teal-950/30 border-teal-500/50 shadow-md shadow-teal-500/10'
-                      : 'bg-surface-elevated/40 border-white/5 hover:border-white/20 hover:bg-surface-elevated/70'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm text-slate-200">{m.name}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
-                        m.provider === 'mock' 
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                          : m.provider === 'google' 
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' 
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                      }`}>
-                        {m.provider}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">{m.description}</p>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                    <span>{m.costPerSecond} credits/sec</span>
-                    {m.isDefault && <span className="text-teal-400 font-medium">★ Recommended</span>}
-                  </div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Generative Model Provider
+            </label>
+            <span className="text-[11px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2.5 py-0.5 rounded-full">
+              xAI Distilled Architecture
+            </span>
+          </div>
+
+          <div className="rounded-xl p-4 border bg-gradient-to-r from-teal-950/40 via-surface-elevated/70 to-slate-900/60 border-teal-500/40 shadow-lg shadow-teal-950/20">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-base text-white tracking-wide">
+                    {activeModel?.name || 'Grok Imagine Video 1.5 Lite'}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Runway / xAI
+                  </span>
+                  <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/20 border border-teal-500/30 px-2 py-0.5 rounded-full">
+                    ★ Selected Engine
+                  </span>
                 </div>
-              );
-            })}
+                <p className="text-xs text-slate-300 leading-relaxed max-w-xl">
+                  Very fast, low-cost text- and image-to-video distilled from Grok Imagine Video 1.5.
+                </p>
+              </div>
+
+              {/* Pricing Rate Matrix */}
+              <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono">
+                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
+                  resolution === '480p' 
+                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-bold' 
+                    : 'bg-black/40 border-white/10 text-emerald-300/80'
+                }`}>
+                  480p: 2 credits/s
+                </span>
+                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
+                  resolution === '720p' 
+                    ? 'bg-teal-500/20 border-teal-400 text-teal-200 font-bold' 
+                    : 'bg-black/40 border-teal-500/30 text-teal-300/80'
+                }`}>
+                  720p: 3 credits/s
+                </span>
+                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
+                  resolution === '1080p' 
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-200 font-bold' 
+                    : 'bg-black/40 border-white/10 text-purple-300/80'
+                }`}>
+                  1080p: 14 credits/s
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Prompt Input & AI Enhancer */}
+        {/* Image (first frame) Input */}
+        <div 
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className="rounded-xl border border-white/10 bg-surface-elevated/40 p-4 space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> Image (first frame)
+              </label>
+              <span className="text-[10px] text-teal-400/90 font-mono bg-teal-500/10 px-2 py-0.5 rounded">
+                +1 credit
+              </span>
+            </div>
+            {referenceImageUrl && (
+              <button
+                type="button"
+                onClick={() => setReferenceImageUrl('')}
+                className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
+              >
+                <X className="w-3 h-3" /> Remove image
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <input
+              type="url"
+              value={referenceImageUrl}
+              onChange={(e) => setReferenceImageUrl(e.target.value)}
+              placeholder="Paste an image URL"
+              className="flex-1 w-full bg-surface-elevated text-xs text-slate-100 placeholder:text-slate-500 rounded-lg px-3 py-2.5 border border-white/10 focus:border-teal-500 outline-none font-mono"
+            />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1.5"
+              >
+                {isUploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                Upload
+              </button>
+            </div>
+          </div>
+
+          {referenceImageUrl && (
+            <div className="flex items-center gap-3 pt-1">
+              <img 
+                src={referenceImageUrl} 
+                alt="First frame" 
+                className="w-12 h-12 object-cover rounded-lg border border-teal-500/50 shadow"
+              />
+              <div className="text-[11px] text-slate-300 truncate font-mono">
+                <span className="text-teal-400 font-semibold font-sans">Active First Frame:</span> {referenceImageUrl}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Visual Prompt Input & AI Enhancer */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -242,8 +343,8 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={
                 referenceImageUrl 
-                  ? "Describe how this reference image should move and animate... (e.g. Character turns and smiles gently, wind blows through hair)"
-                  : "Describe your scene in detail... (e.g., A cinematic drone shot over ancient emerald waterfall ruins, golden dawn light)"
+                  ? "Describe motion for this image... (e.g. Dove flutters its wings and takes off into the sky, soft camera tilt up)"
+                  : "Describe your scene in detail... (e.g., A beautiful white dove flying gracefully in blue sky, cinematic lighting)"
               }
               className="w-full bg-surface-elevated/80 border border-white/10 rounded-xl p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
             />
@@ -294,12 +395,64 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         {/* Video Parameters Controls */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
           
+          {/* Resolution */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Resolution*
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['480p', '720p', '1080p'] as VideoResolution[]).map((res) => {
+                const active = resolution === res;
+                const rateLabel = res === '480p' ? '2 c/s' : res === '720p' ? '3 c/s' : '14 c/s';
+                return (
+                  <button
+                    key={res}
+                    type="button"
+                    onClick={() => setResolution(res)}
+                    className={`py-2 px-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center ${
+                      active
+                        ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-sm'
+                        : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
+                    }`}
+                  >
+                    <span className="text-xs font-bold">{res}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{rateLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Duration*
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {([5, 10, 15] as VideoDuration[]).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d)}
+                  className={`py-2 px-2 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center transition-all ${
+                    duration === d
+                      ? 'bg-teal-500/20 border-teal-500 text-teal-300'
+                      : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
+                  }`}
+                >
+                  <span className="font-bold">{d}s</span>
+                  <span className="text-[10px] text-slate-400 font-normal">seconds</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Aspect Ratio */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Aspect Ratio
             </label>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {ASPECT_RATIOS.map((item) => {
                 const active = aspectRatio === item.ratio;
                 return (
@@ -322,56 +475,9 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             </div>
           </div>
 
-          {/* Duration */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Duration
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {[5, 10].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDuration(d as VideoDuration)}
-                  className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                    duration === d
-                      ? 'bg-teal-500/20 border-teal-500 text-teal-300'
-                      : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
-                  }`}
-                >
-                  <Film className="w-3.5 h-3.5" />
-                  {d} Seconds
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Resolution */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Resolution
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['720p', '1080p', '4k'] as VideoResolution[]).map((res) => (
-                <button
-                  key={res}
-                  type="button"
-                  onClick={() => setResolution(res)}
-                  className={`py-2 px-2 rounded-xl border text-xs font-semibold text-center transition-all ${
-                    resolution === res
-                      ? 'bg-teal-500/20 border-teal-500 text-teal-300'
-                      : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
-                  }`}
-                >
-                  {res}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
-        {/* Advanced Options Accordion (Image-to-Video Uploader) */}
+        {/* Additional settings */}
         <div className="border-t border-white/10 pt-4">
           <button
             type="button"
@@ -379,95 +485,18 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Image-to-Video & Negative Prompt Settings</span>
+            <span>Additional settings (Negative prompt, motion controls)</span>
             {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
           {showAdvanced && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              
-              {/* Image-to-Video File Uploader */}
-              <div className="space-y-2">
-                <label className="block text-xs text-slate-300 font-semibold flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> Reference Starter Image (Image-to-Video)
-                  </span>
-                  {referenceImageUrl && (
-                    <span className="text-[10px] text-teal-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Image Loaded
-                    </span>
-                  )}
-                </label>
-
-                {referenceImageUrl ? (
-                  <div className="relative rounded-xl border border-teal-500/40 bg-surface-elevated/60 p-2 flex items-center gap-3 overflow-hidden">
-                    <img 
-                      src={referenceImageUrl} 
-                      alt="Reference" 
-                      className="w-16 h-16 object-cover rounded-lg border border-white/10"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-white truncate">Reference Frame</p>
-                      <p className="text-[10px] text-slate-400 font-mono truncate">{referenceImageUrl}</p>
-                      <span className="text-[10px] text-teal-300 font-medium">Ready to animate</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReferenceImageUrl('')}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
-                      title="Remove image"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="cursor-pointer border-2 border-dashed border-white/10 hover:border-teal-500/50 bg-surface-elevated/30 hover:bg-surface-elevated/60 rounded-xl p-4 text-center transition-all flex flex-col items-center justify-center gap-1.5"
-                  >
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileUpload} 
-                      accept="image/png,image/jpeg,image/webp" 
-                      className="hidden" 
-                    />
-                    {isUploadingImage ? (
-                      <div className="flex items-center gap-2 text-xs text-teal-300 py-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Uploading image...
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="w-5 h-5 text-slate-400" />
-                        <span className="text-xs font-medium text-slate-200">
-                          Drop reference image here, or <span className="text-teal-400 underline">browse</span>
-                        </span>
-                        <span className="text-[10px] text-slate-500">Supports PNG, JPG, WEBP (up to 10MB)</span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Direct Image URL input */}
-                <input
-                  type="url"
-                  value={referenceImageUrl}
-                  onChange={(e) => setReferenceImageUrl(e.target.value)}
-                  placeholder="Or paste external image URL (https://...)"
-                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none"
-                />
-              </div>
-
-              {/* Negative Prompt */}
+            <div className="mt-4 pt-2">
               <div className="space-y-2">
                 <label className="block text-xs text-slate-300 font-semibold">
                   Negative Prompt (Elements to avoid)
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={negativePrompt}
                   onChange={(e) => setNegativePrompt(e.target.value)}
                   placeholder="e.g. morphing artifacts, distorted anatomy, jitter, low resolution, blurry, watermark"
@@ -477,42 +506,57 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                   Instructs the generative model to exclude visual defects or unwanted styles.
                 </span>
               </div>
-
             </div>
           )}
         </div>
 
-        {/* Submit Bar */}
+        {/* Submit & Result Summary Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
-            <span>
-              Estimated cost: <strong className="text-white font-mono">{currentCost} credits</strong> ({duration}s @ {selectedModel?.costPerSecond || 1}c/s)
-            </span>
+          <div className="space-y-1 text-left w-full sm:w-auto">
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
+              <span>
+                Estimated cost: <strong className="text-teal-300 font-mono text-sm">{currentCost} credits</strong> ({duration}s @ {getCostPerSecond(resolution)} credits/s{referenceImageUrl ? ' + 1 credit start frame' : ''})
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-mono pl-6">
+              2 credits per second at 480p, 3 at 720p, 14 at 1080p (720p upscaled). An image-to-video start frame adds 1 credit.
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={!prompt.trim() || isSubmitting}
-            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                Queueing Generation...
-              </>
-            ) : referenceImageUrl ? (
-              <>
-                <ImageIcon className="w-4 h-4 font-bold" />
-                Animate Image (Image-to-Video)
-              </>
-            ) : (
-              <>
-                <Video className="w-4 h-4 font-bold" />
-                Generate Video
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-surface-elevated text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset
+            </button>
+
+            <button
+              type="submit"
+              disabled={!prompt.trim() || isSubmitting}
+              className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  Generating Video...
+                </>
+              ) : referenceImageUrl ? (
+                <>
+                  <ImageIcon className="w-4 h-4 font-bold" />
+                  Run (Image-to-Video)
+                </>
+              ) : (
+                <>
+                  <Video className="w-4 h-4 font-bold" />
+                  Run (Generate Video)
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
       </form>
