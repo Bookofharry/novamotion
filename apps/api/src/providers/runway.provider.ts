@@ -10,6 +10,8 @@ export class RunwayVideoProvider implements IVideoProvider {
 
   private getProviderModel(modelId: string): string {
     switch (modelId) {
+      case 'runway-lite':
+        return 'runway_lite';
       case 'gen4-turbo':
         return 'gen4_turbo';
       case 'wan3-prime':
@@ -94,6 +96,7 @@ export class RunwayVideoProvider implements IVideoProvider {
 
     const providerModel = this.getProviderModel(request.modelId);
     const isGen4Turbo = providerModel === 'gen4_turbo';
+    const isRunwayLite = providerModel === 'runway_lite';
     const isImageToVideo = Boolean(request.referenceImageUrl) || isGen4Turbo;
 
     if (isGen4Turbo && !request.referenceImageUrl) {
@@ -102,13 +105,18 @@ export class RunwayVideoProvider implements IVideoProvider {
       );
     }
 
+    // For Runway Lite: uses fast gen4_turbo when image is provided, or fast grok_imagine_1_5_lite for text
+    const effectiveModel = isRunwayLite
+      ? (request.referenceImageUrl ? 'gen4_turbo' : 'grok_imagine_1_5_lite')
+      : providerModel;
+
     const promptText = request.enhancedPrompt || request.prompt;
     const endpoint = isImageToVideo 
       ? 'https://api.dev.runwayml.com/v1/image_to_video' 
       : 'https://api.dev.runwayml.com/v1/text_to_video';
 
     const payload: Record<string, any> = {
-      model: providerModel,
+      model: effectiveModel,
       duration: request.duration || 5,
     };
 
@@ -123,7 +131,7 @@ export class RunwayVideoProvider implements IVideoProvider {
     // Model specific parameter mappings
     if (providerModel === 'h3_max') {
       payload.resolution = request.resolution === '480p' ? '480p' : '768p';
-    } else if (providerModel === 'gen4_turbo') {
+    } else if (providerModel === 'gen4_turbo' || providerModel === 'runway_lite') {
       payload.ratio = this.mapRatioForGen4Turbo(request.aspectRatio);
     } else if (providerModel === 'wan3_prime') {
       payload.ratio = this.mapRatioForWan3(request.aspectRatio, request.resolution);

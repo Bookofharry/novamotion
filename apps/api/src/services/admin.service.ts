@@ -104,6 +104,9 @@ class AdminService {
   calculateWholesaleCost(modelId: string, duration: number, resolution: string, hasImage: boolean): number {
     const dur = duration || 5;
 
+    if (modelId === 'runway-lite') {
+      return dur * 5; // 5 credits/s
+    }
     if (modelId === 'gen4-turbo') {
       return Math.max(10, dur * 5); // 5 credits/s, min 10
     }

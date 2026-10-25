@@ -205,7 +205,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     let rateLabel = '3 credits/s';
     let subtext = '2 credits/s at 480p, 3 at 720p, 14 at 1080p. Start frame adds 1 credit.';
 
-    if (mId === 'gen4-turbo') {
+    if (mId === 'runway-lite') {
+      wholesale = duration * 5;
+      rateLabel = '5 credits/s';
+      subtext = '5 credits per second of video.';
+    } else if (mId === 'gen4-turbo') {
       wholesale = Math.max(10, duration * 5);
       rateLabel = '5 credits/s (min 10)';
       subtext = '5 credits per second of video (minimum 10 credits).';
@@ -261,18 +265,22 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               Generative Model Provider
             </label>
             <span className="text-[11px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2.5 py-0.5 rounded-full">
-              4 Live Studio Engines Available
+              {models.length} Live Studio Engines Available
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             {models.map((m) => {
               const isSelected = activeModel?.id === m.id;
               let badgeColor = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
               let badgeText = 'xAI';
               let rateTag = '2-14 c/s';
 
-              if (m.id === 'gen4-turbo') {
+              if (m.id === 'runway-lite') {
+                badgeColor = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
+                badgeText = 'Runway';
+                rateTag = '5 c/s';
+              } else if (m.id === 'gen4-turbo') {
                 badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
                 badgeText = 'Runway';
                 rateTag = '5 c/s (min 10c)';

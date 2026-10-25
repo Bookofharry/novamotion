@@ -210,6 +210,7 @@ export const VideoHistory: React.FC<VideoHistoryProps> = ({
             >
               <option value="all">All Models</option>
               <option value="grok-imagine-1-5-lite">Grok Imagine 1.5 Lite</option>
+              <option value="runway-lite">Runway Lite</option>
               <option value="gen4-turbo">Gen-4 Turbo</option>
               <option value="wan3-prime">WAN 3.0 Prime</option>
               <option value="h3-max">MiniMax H3 Max</option>
@@ -312,7 +313,12 @@ export const VideoHistory: React.FC<VideoHistoryProps> = ({
                   {/* Top Right Model Badge */}
                   <div className="absolute top-2.5 right-2.5 pointer-events-none">
                     <span className="px-2 py-0.5 rounded bg-teal-950/80 backdrop-blur-md text-[10px] font-mono font-bold text-teal-300 border border-teal-500/30 uppercase tracking-wider">
-                      {job.modelId.replace('-1-5-lite', '').replace('wan3-prime', 'WAN 3.0').replace('h3-max', 'MiniMax')}
+                      {job.modelId
+                        .replace('runway-lite', 'Runway Lite')
+                        .replace('grok-imagine-1-5-lite', 'Grok Lite')
+                        .replace('gen4-turbo', 'Gen-4 Turbo')
+                        .replace('wan3-prime', 'WAN 3.0')
+                        .replace('h3-max', 'MiniMax')}
                     </span>
                   </div>
                 </div>
