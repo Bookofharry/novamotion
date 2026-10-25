@@ -9,8 +9,8 @@ export class RunwayVideoProvider implements IVideoProvider {
   }
 
   private mapAspectRatio(ratio: string): string {
-    if (ratio === '9:16') return '768:1280';
-    return '1280:768'; // default 16:9
+    if (ratio === '9:16') return '720:1280';
+    return '1280:720'; // default 16:9
   }
 
   async generateVideo(job: VideoJob, request: GenerateVideoRequest): Promise<ProviderInitiateResult> {
@@ -22,11 +22,14 @@ export class RunwayVideoProvider implements IVideoProvider {
 
     const promptText = request.enhancedPrompt || request.prompt;
     const isImageToVideo = Boolean(request.referenceImageUrl);
+    const endpoint = isImageToVideo 
+      ? 'https://api.dev.runwayml.com/v1/image_to_video' 
+      : 'https://api.dev.runwayml.com/v1/text_to_video';
 
     const payload: Record<string, any> = {
-      model: request.modelId === 'runway-gen2' ? 'gen2' : 'gen3a_turbo',
+      model: 'gen4.5',
       promptText,
-      duration: request.duration,
+      duration: request.duration || 5,
       ratio: this.mapAspectRatio(request.aspectRatio),
     };
 
@@ -39,12 +42,12 @@ export class RunwayVideoProvider implements IVideoProvider {
     }
 
     try {
-      const response = await fetch('https://api.dev.runwayml.com/v1/tasks', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`,
-          'X-Runway-Version': '2024-09-13',
+          'X-Runway-Version': '2024-11-06',
         },
         body: JSON.stringify(payload),
       });
@@ -79,7 +82,7 @@ export class RunwayVideoProvider implements IVideoProvider {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
-          'X-Runway-Version': '2024-09-13',
+          'X-Runway-Version': '2024-11-06',
         },
       });
 
@@ -102,7 +105,7 @@ export class RunwayVideoProvider implements IVideoProvider {
         return {
           status: 'FAILED',
           progress: 0,
-          errorMessage: data.failure || data.failureCode || 'Generation failed on Runway service',
+          errorMessage: data.failure || data.failureCode || 'Runway generation failed',
         };
       }
 
@@ -113,35 +116,41 @@ export class RunwayVideoProvider implements IVideoProvider {
         };
       }
 
-      const rawProgress = typeof data.progress === 'number' ? data.progress : 0.5;
-      const progress = Math.min(98, Math.max(10, Math.floor(rawProgress * 100)));
+      // RUNNING or PENDING
+      const rawProgress = typeof data.progress === 'number' ? data.progress : 0;
+      const progressPercent = Math.min(99, Math.max(5, Math.round(rawProgress * 100)));
 
       return {
         status: 'PROCESSING',
-        progress,
+        progress: progressPercent,
       };
     } catch (err: any) {
+      console.error('[Runway CheckStatus Error]:', err);
       return {
-        status: 'FAILED',
-        progress: 0,
-        errorMessage: err.message || 'Runway status check encountered an error',
+        status: 'PROCESSING',
+        progress: 10,
+        errorMessage: err.message,
       };
     }
   }
 
   async cancel(providerJobId: string): Promise<boolean> {
     if (!this.apiKey) return false;
+
     try {
-      const res = await fetch(`https://api.dev.runwayml.com/v1/tasks/${providerJobId}`, {
+      const response = await fetch(`https://api.dev.runwayml.com/v1/tasks/${providerJobId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
-          'X-Runway-Version': '2024-09-13',
+          'X-Runway-Version': '2024-11-06',
         },
       });
-      return res.ok;
-    } catch (e) {
+      return response.ok;
+    } catch (err) {
+      console.error('[Runway Cancel Error]:', err);
       return false;
     }
   }
 }
+
+export const runwayVideoProvider = new RunwayVideoProvider();
