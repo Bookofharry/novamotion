@@ -5,6 +5,7 @@ import { VideoPlayer } from './components/VideoPlayer.js';
 import { JobDrawer } from './components/JobDrawer.js';
 import { VideoGallery } from './components/VideoGallery.js';
 import { ModelStatus } from './components/ModelStatus.js';
+import { SettingsModal } from './components/SettingsModal.js';
 import { 
   VideoModelInfo, 
   VideoJob, 
@@ -27,6 +28,7 @@ export function App() {
   const [jobs, setJobs] = useState<VideoJob[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isJobDrawerOpen, setIsJobDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeVideo, setActiveVideo] = useState<{
     url?: string;
     thumb?: string;
@@ -147,6 +149,7 @@ export function App() {
         credits={credits}
         activeJobsCount={activeJobs.length}
         onOpenJobDrawer={() => setIsJobDrawerOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -210,6 +213,12 @@ export function App() {
         jobs={jobs}
         onSelectJob={handleSelectJobForPlayer}
         onCancelJob={handleCancelJob}
+      />
+
+      {/* Provider API Keys Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
       />
     </div>
   );

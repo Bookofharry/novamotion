@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, Sparkles, Layers, Coins, Activity } from 'lucide-react';
+import { Video, Sparkles, Layers, Coins, Activity, Settings } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
@@ -8,6 +8,7 @@ interface NavbarProps {
   credits: UserCredits | null;
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
+  onOpenSettings: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   credits,
   activeJobsCount,
   onOpenJobDrawer,
+  onOpenSettings,
 }) => {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 glass-panel bg-background/80 backdrop-blur-md">
@@ -102,6 +104,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>{credits ? credits.available : '...'}</span>
             <span className="text-xs text-teal-400/60 font-normal">credits</span>
           </div>
+
+          {/* Settings API Keys Button */}
+          <button
+            onClick={onOpenSettings}
+            className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+            title="Configure Provider API Keys"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
 
       </div>

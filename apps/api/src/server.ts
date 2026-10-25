@@ -8,6 +8,7 @@ import { promptRouter } from './routes/prompt.routes.js';
 import { projectsRouter } from './routes/projects.routes.js';
 import { creditsRouter } from './routes/credits.routes.js';
 import { uploadRouter } from './routes/upload.routes.js';
+import { settingsRouter } from './routes/settings.routes.js';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/v1/prompt', promptRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/credits', creditsRouter);
 app.use('/api/v1/upload', uploadRouter);
+app.use('/api/v1/settings', settingsRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

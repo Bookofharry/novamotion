@@ -85,3 +85,29 @@ export async function uploadReferenceImage(file: File): Promise<{ url: string; f
   return data.data;
 }
 
+export interface ProviderKeysStatus {
+  hasRunwayKey: boolean;
+  runwayKeyMasked: string;
+  hasGoogleKey: boolean;
+  googleKeyMasked: string;
+}
+
+export async function fetchProviderKeys(): Promise<ProviderKeysStatus> {
+  const res = await fetch(`${BASE_URL}/settings/keys`);
+  const data = await res.json();
+  return data.data;
+}
+
+export async function updateProviderKeys(keys: { runwayKey?: string; googleKey?: string }): Promise<void> {
+  const res = await fetch(`${BASE_URL}/settings/keys`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(keys),
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || 'Failed to update keys');
+  }
+}
+
+
