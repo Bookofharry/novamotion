@@ -259,42 +259,42 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   );
 
   return (
-    <div className="w-full space-y-6">
-      <form onSubmit={handleGenerate} className="glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
+    <div className="w-full space-y-4">
+      <form onSubmit={handleGenerate} className="glass-panel rounded-xl p-4 sm:p-5 border border-white/10 space-y-4">
         
         {/* Generative Model Selector (Click-to-Pop Modal) */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               Generative Model Provider
             </label>
-            <span className="text-[11px] font-mono text-teal-400">
-              {models.length} Live Studio Engines Available
+            <span className="text-[10px] font-mono text-teal-400">
+              {models.length} Engines Available
             </span>
           </div>
 
           <div
             onClick={() => setIsModelModalOpen(true)}
-            className="group glass-panel rounded-xl p-3.5 border border-white/10 hover:border-teal-500/50 bg-surface-elevated/70 hover:bg-surface-elevated/90 cursor-pointer transition-all flex items-center justify-between shadow-md"
+            className="group glass-panel rounded-xl p-2.5 sm:p-3 border border-white/10 hover:border-teal-500/50 bg-surface-elevated/70 hover:bg-surface-elevated/90 cursor-pointer transition-all flex items-center justify-between shadow-sm"
           >
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500/20 to-cyan-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-                <Cpu className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-teal-500/20 to-cyan-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                <Cpu className="w-4 h-4" />
               </div>
 
-              <div className="overflow-hidden space-y-0.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold text-sm text-white group-hover:text-teal-300 transition-colors">
+              <div className="overflow-hidden">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-bold text-xs sm:text-sm text-white group-hover:text-teal-300 transition-colors">
                     {activeModel?.name || 'Select a Generative Model'}
                   </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
                     {activeModel?.id.includes('grok') ? 'xAI' : activeModel?.id.includes('wan') ? 'Alibaba' : activeModel?.id.includes('h3') ? 'MiniMax' : 'Runway'}
                   </span>
-                  <span className="text-[11px] font-mono text-teal-400 font-semibold hidden sm:inline">
-                    {activeModel?.costPerSecond} credits/s
+                  <span className="text-[10px] font-mono text-teal-400 font-semibold hidden sm:inline">
+                    {activeModel?.costPerSecond} c/s
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 truncate max-w-xl">
+                <p className="text-[11px] text-slate-400 truncate max-w-lg mt-0.5">
                   {activeModel?.description}
                 </p>
               </div>
@@ -302,10 +302,10 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 group-hover:bg-teal-500 text-teal-300 group-hover:text-slate-950 border border-teal-500/30 text-xs font-bold transition-all flex-shrink-0 ml-3"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-500/10 group-hover:bg-teal-500 text-teal-300 group-hover:text-slate-950 border border-teal-500/30 text-[11px] font-bold transition-all flex-shrink-0 ml-2"
             >
-              <span>Switch Model</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>Switch</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
         </div>
@@ -321,10 +321,10 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
         {/* Gen-4 Turbo Notice (if selected) */}
         {isGen4 && (
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/40 text-cyan-200 text-xs">
-            <AlertCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/40 text-cyan-200 text-xs">
+            <AlertCircle className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
             <span>
-              <strong>Gen-4 Turbo Mode:</strong> Runway's fastest Image-to-Video model. Please paste an image URL or upload your starter frame below.
+              <strong>Gen-4 Turbo Mode:</strong> Runway Image-to-Video. Please provide a starter frame below.
             </span>
           </div>
         )}
@@ -333,7 +333,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         <div 
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className={`rounded-xl border p-4 space-y-3 transition-colors ${
+          className={`rounded-lg border p-3 space-y-2 transition-colors ${
             isGen4 
               ? 'border-cyan-500/40 bg-cyan-950/20' 
               : 'border-white/10 bg-surface-elevated/40'
@@ -341,23 +341,23 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-[11px] font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> 
                 {activeModel?.id === 'wan3-prime' || activeModel?.id === 'h3-max' 
-                  ? 'Keyframes (start and end frame)' 
+                  ? 'Keyframes (start & end)' 
                   : 'Image (first frame)'}
               </label>
               {isGen4 ? (
-                <span className="text-[10px] text-amber-300 font-mono bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded font-bold">
+                <span className="text-[9px] text-amber-300 font-mono bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 rounded font-bold">
                   Required
                 </span>
               ) : activeModel?.id === 'grok-imagine-1-5-lite' ? (
-                <span className="text-[10px] text-teal-400 font-mono bg-teal-500/10 px-2 py-0.5 rounded">
+                <span className="text-[9px] text-teal-400 font-mono bg-teal-500/10 px-1.5 py-0.2 rounded">
                   +1 credit
                 </span>
               ) : (
-                <span className="text-[10px] text-slate-400 font-mono">
-                  Optional starter frame
+                <span className="text-[9px] text-slate-400 font-mono">
+                  Optional
                 </span>
               )}
             </div>
@@ -365,20 +365,20 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               <button
                 type="button"
                 onClick={() => setReferenceImageUrl('')}
-                className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
+                className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors"
               >
-                <X className="w-3 h-3" /> Remove image
+                <X className="w-3 h-3" /> Remove
               </button>
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
             <input
               type="url"
               value={referenceImageUrl}
               onChange={(e) => setReferenceImageUrl(e.target.value)}
               placeholder="Paste an image URL (e.g. https://...)"
-              className="flex-1 w-full bg-surface-elevated text-xs text-slate-100 placeholder:text-slate-500 rounded-lg px-3 py-2.5 border border-white/10 focus:border-teal-500 outline-none font-mono"
+              className="flex-1 w-full bg-surface-elevated text-xs text-slate-100 placeholder:text-slate-500 rounded-lg px-2.5 py-1.5 border border-white/10 focus:border-teal-500 outline-none font-mono"
             />
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <input
@@ -392,99 +392,99 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingImage}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1.5"
               >
-                {isUploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                Upload File
+                {isUploadingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                Upload
               </button>
             </div>
           </div>
 
           {referenceImageUrl && (
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-2.5 pt-0.5">
               <img 
                 src={referenceImageUrl} 
                 alt="First frame" 
-                className="w-12 h-12 object-cover rounded-lg border border-teal-500/50 shadow"
+                className="w-10 h-10 object-cover rounded-lg border border-teal-500/50 shadow"
               />
-              <div className="text-[11px] text-slate-300 truncate font-mono">
-                <span className="text-teal-400 font-semibold font-sans">Active Reference Frame:</span> {referenceImageUrl}
+              <div className="text-[10px] text-slate-300 truncate font-mono">
+                <span className="text-teal-400 font-semibold font-sans">Active Frame:</span> {referenceImageUrl}
               </div>
             </div>
           )}
         </div>
 
         {/* Visual Prompt Input & AI Enhancer */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 Visual Prompt*
               </label>
               {referenceImageUrl && (
-                <span className="flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  <ImageIcon className="w-3 h-3" /> Image-to-Video Active
+                <span className="flex items-center gap-1 text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  <ImageIcon className="w-2.5 h-2.5" /> Image-to-Video
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <select
                 value={selectedStyle}
                 onChange={(e) => setSelectedStyle(e.target.value as any)}
-                className="bg-surface-elevated text-xs text-slate-300 rounded-lg px-2.5 py-1 border border-white/10 outline-none focus:border-teal-500"
+                className="bg-surface-elevated text-[11px] text-slate-300 rounded-md px-2 py-1 border border-white/10 outline-none focus:border-teal-500"
               >
                 <option value="cinematic">Cinematic</option>
                 <option value="cyberpunk">Cyberpunk</option>
-                <option value="photorealistic">Photorealistic</option>
+                <option value="photorealistic">Photoreal</option>
                 <option value="anime">Anime</option>
                 <option value="3d-render">3D Render</option>
               </select>
               <select
                 value={selectedCamera}
                 onChange={(e) => setSelectedCamera(e.target.value as any)}
-                className="bg-surface-elevated text-xs text-slate-300 rounded-lg px-2.5 py-1 border border-white/10 outline-none focus:border-teal-500"
+                className="bg-surface-elevated text-[11px] text-slate-300 rounded-md px-2 py-1 border border-white/10 outline-none focus:border-teal-500"
               >
                 <option value="zoom-in">Zoom In</option>
                 <option value="zoom-out">Zoom Out</option>
                 <option value="pan-left">Pan Left</option>
                 <option value="pan-right">Pan Right</option>
-                <option value="drone-shot">Drone Aerial</option>
-                <option value="orbital">Orbital 360</option>
+                <option value="drone-shot">Drone Shot</option>
+                <option value="orbital">Orbital</option>
               </select>
               <button
                 type="button"
                 onClick={handleEnhance}
                 disabled={!prompt.trim() || isEnhancing}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-xs font-medium transition-all disabled:opacity-40"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 hover:text-white text-[11px] font-medium transition-all disabled:opacity-40"
               >
-                <Wand2 className={`w-3.5 h-3.5 ${isEnhancing ? 'animate-spin' : ''}`} />
-                {isEnhancing ? 'Enhancing...' : '✨ Enhance Prompt'}
+                <Wand2 className={`w-3 h-3 ${isEnhancing ? 'animate-spin' : ''}`} />
+                {isEnhancing ? 'Enhancing...' : '✨ Enhance'}
               </button>
             </div>
           </div>
 
           <div className="relative">
             <textarea
-              rows={3}
+              rows={2}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={
                 isGen4
-                  ? "Describe motion for the image... (e.g. Smooth camera forward push-in, water cascades down rocks, character turns gracefully)"
+                  ? "Describe motion for the image... (e.g. Smooth camera forward push-in, water cascades down rocks)"
                   : referenceImageUrl 
-                  ? "Describe how the first frame should animate... (e.g. Paper dragon lifts head, unfurls wings, launches from desk into window light)"
+                  ? "Describe how the first frame should animate... (e.g. Paper dragon lifts head, launches from desk)"
                   : "Describe your scene in detail... (e.g., A majestic white dove soaring peacefully across sunrise sky above sapphire waters)"
               }
-              className="w-full bg-surface-elevated/80 border border-white/10 rounded-xl p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
+              className="w-full bg-surface-elevated/80 border border-white/10 rounded-lg p-3 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
             />
-            <div className="absolute right-3 bottom-3 text-[10px] text-slate-500 font-mono">
+            <div className="absolute right-2.5 bottom-2 text-[9px] text-slate-500 font-mono">
               {prompt.length} chars
             </div>
           </div>
 
           {/* Quick Presets */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] text-slate-500 flex items-center gap-1 mr-1">
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className="text-[10px] text-slate-500 flex items-center gap-1 mr-0.5">
               <Zap className="w-3 h-3 text-amber-400" /> Presets:
             </span>
             {PRESET_PROMPTS.map((sample, i) => (
@@ -492,7 +492,8 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                 key={i}
                 type="button"
                 onClick={() => setPrompt(sample)}
-                className="text-[11px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 px-2.5 py-0.5 rounded-full transition-colors border border-white/5 truncate max-w-[280px]"
+                className="text-[10px] bg-white/5 hover:bg-white/10 text-slate-400 hover:text-slate-200 px-2 py-0.5 rounded-md transition-colors border border-white/5 truncate max-w-[200px]"
+                title={sample}
               >
                 {sample}
               </button>
@@ -501,10 +502,10 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
           {/* Enhanced Prompt Display */}
           {enhancedPrompt && (
-            <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-1">
+            <div className="p-2.5 rounded-lg bg-purple-950/20 border border-purple-500/30 space-y-1">
               <div className="flex items-center justify-between text-xs font-semibold text-purple-300">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" /> AI Enhanced Cinematic Prompt
+                <span className="flex items-center gap-1 text-[11px]">
+                  <Sparkles className="w-3 h-3" /> AI Enhanced Prompt
                 </span>
                 <button
                   type="button"
@@ -514,7 +515,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                   Clear
                 </button>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-mono bg-black/30 p-2.5 rounded-lg border border-purple-500/10">
+              <p className="text-[11px] text-slate-300 leading-relaxed font-mono bg-black/30 p-2 rounded border border-purple-500/10">
                 {enhancedPrompt}
               </p>
             </div>
@@ -522,14 +523,14 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         </div>
 
         {/* Parameters: Resolution, Duration, Aspect Ratio */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
           
           {/* Resolution */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
               Resolution*
             </label>
-            <div className={`grid gap-2 ${activeModel?.supportedResolutions.length === 2 ? 'grid-cols-2' : activeModel?.supportedResolutions.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+            <div className={`grid gap-1.5 ${activeModel?.supportedResolutions.length === 2 ? 'grid-cols-2' : activeModel?.supportedResolutions.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
               {activeModel?.supportedResolutions.map((res) => {
                 const active = resolution === res;
                 let rate = '';
@@ -548,14 +549,14 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                     key={res}
                     type="button"
                     onClick={() => setResolution(res)}
-                    className={`py-2 px-2 rounded-xl border text-center transition-all flex flex-col items-center justify-center ${
+                    className={`py-1.5 px-1 rounded-lg border text-center transition-all flex flex-col items-center justify-center ${
                       active
                         ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-sm'
                         : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
                     }`}
                   >
-                    <span className="text-xs font-bold">{res}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">{rate}</span>
+                    <span className="text-[11px] font-bold">{res}</span>
+                    <span className="text-[9px] text-slate-400 font-mono">{rate}</span>
                   </button>
                 );
               })}
@@ -564,23 +565,23 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
           {/* Duration */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
               Duration*
             </label>
-            <div className={`grid gap-2 ${activeModel?.supportedDurations.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+            <div className={`grid gap-1.5 ${activeModel?.supportedDurations.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
               {activeModel?.supportedDurations.map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => setDuration(d)}
-                  className={`py-2 px-2 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center transition-all ${
+                  className={`py-1.5 px-1 rounded-lg border text-[11px] font-semibold flex flex-col items-center justify-center transition-all ${
                     duration === d
                       ? 'bg-teal-500/20 border-teal-500 text-teal-300'
                       : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
                   }`}
                 >
                   <span className="font-bold">{d}s</span>
-                  <span className="text-[10px] text-slate-400 font-normal">seconds</span>
+                  <span className="text-[9px] text-slate-500 font-normal">sec</span>
                 </button>
               ))}
             </div>
@@ -588,7 +589,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
           {/* Aspect Ratio */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
               Aspect Ratio*
             </label>
             <div className={`grid gap-1.5 ${supportedRatios.length === 5 ? 'grid-cols-5' : supportedRatios.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
@@ -600,14 +601,14 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                     type="button"
                     onClick={() => setAspectRatio(item.ratio)}
                     title={item.label}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
+                    className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg border text-center transition-all ${
                       active
                         ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-sm'
                         : 'bg-surface-elevated/40 border-white/5 text-slate-400 hover:border-white/20'
                     }`}
                   >
-                    <div className={`rounded-sm mb-1.5 flex items-center justify-center ${item.iconClass} ${active ? 'border-teal-400' : 'border-slate-500'}`} />
-                    <span className="text-[10px] font-semibold">{item.ratio}</span>
+                    <div className={`rounded-xs mb-1 flex items-center justify-center ${item.iconClass} ${active ? 'border-teal-400' : 'border-slate-500'}`} />
+                    <span className="text-[9px] font-semibold">{item.ratio}</span>
                   </button>
                 );
               })}
@@ -617,31 +618,31 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         </div>
 
         {/* Additional settings */}
-        <div className="border-t border-white/10 pt-4">
+        <div className="border-t border-white/10 pt-2.5">
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+            className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors"
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-3 h-3" />
             <span>Additional settings (Negative prompt, motion controls)</span>
-            {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
 
           {showAdvanced && (
-            <div className="mt-4 pt-2">
-              <div className="space-y-2">
-                <label className="block text-xs text-slate-300 font-semibold">
+            <div className="mt-2 pt-1">
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-slate-300 font-semibold">
                   Negative Prompt (Elements to avoid)
                 </label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={negativePrompt}
                   onChange={(e) => setNegativePrompt(e.target.value)}
                   placeholder="e.g. morphing artifacts, distorted anatomy, jitter, low resolution, blurry, watermark"
-                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none resize-none leading-relaxed"
+                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2 border border-white/10 focus:border-teal-500 outline-none resize-none leading-relaxed"
                 />
-                <span className="text-[10px] text-slate-500 block">
+                <span className="text-[9px] text-slate-500 block">
                   Instructs the generative model to exclude visual defects or unwanted styles.
                 </span>
               </div>
@@ -650,50 +651,50 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         </div>
 
         {/* Submit & Result Summary Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/10">
-          <div className="space-y-1 text-left w-full sm:w-auto">
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10">
+          <div className="space-y-0.5 text-left w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 text-xs text-slate-300">
+              <Info className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
               <span>
-                Generation fee: <strong className="text-teal-300 font-mono text-sm">{costInfo.total} credits</strong>
-                <span className="text-slate-400 text-[11px] ml-1.5 font-normal">
-                  ({costInfo.wholesale} GPU compute + {costInfo.platformFee} platform orchestration)
+                Generation fee: <strong className="text-teal-300 font-mono text-xs">{costInfo.total} credits</strong>
+                <span className="text-slate-400 text-[10px] ml-1 font-normal">
+                  ({costInfo.wholesale} GPU compute + {costInfo.platformFee} platform)
                 </span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono pl-6">
+            <p className="text-[10px] text-slate-400 font-mono pl-5">
               Wholesale base: {costInfo.subtext}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-3 rounded-xl border border-white/10 hover:border-white/20 bg-surface-elevated text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="px-3 py-2 rounded-lg border border-white/10 hover:border-white/20 bg-surface-elevated text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3" />
               Reset
             </button>
 
             <button
               type="submit"
               disabled={(!prompt.trim() && !referenceImageUrl.trim()) || (isGen4 && !referenceImageUrl.trim()) || isSubmitting}
-              className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-none px-5 py-2 rounded-lg bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-teal-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  Generating Video...
+                  <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  Generating...
                 </>
               ) : isGen4 || referenceImageUrl ? (
                 <>
-                  <ImageIcon className="w-4 h-4 font-bold" />
+                  <ImageIcon className="w-3.5 h-3.5 font-bold" />
                   Run ({activeModel?.name || 'Image-to-Video'})
                 </>
               ) : (
                 <>
-                  <Video className="w-4 h-4 font-bold" />
+                  <Video className="w-3.5 h-3.5 font-bold" />
                   Run ({activeModel?.name || 'Generate Video'})
                 </>
               )}
