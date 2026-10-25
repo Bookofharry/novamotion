@@ -10,6 +10,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@videolab/database": "*",
     "@videolab/shared": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

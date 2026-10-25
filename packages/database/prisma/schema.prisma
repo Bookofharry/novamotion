@@ -1,0 +1,94 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+enum JobStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CreditTransactionType {
+  USAGE
+  PURCHASE
+  REFUND
+  BONUS
+}
+
+model User {
+  id                 String              @id @default(uuid())
+  email              String?             @unique
+  name               String?
+  creditsBalance     Int                 @default(250)
+  projects           Project[]
+  videoJobs          VideoJob[]
+  creditTransactions CreditTransaction[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model Project {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  videoJobs   VideoJob[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model VideoJob {
+  id                String    @id @default(uuid())
+  prompt            String
+  enhancedPrompt    String?
+  negativePrompt    String?
+  referenceImageUrl String?
+  modelId           String
+  provider          String
+  providerJobId     String?
+  status            JobStatus @default(PENDING)
+  progress          Int       @default(0)
+  aspectRatio       String    @default("16:9")
+  duration          Int       @default(5)
+  resolution        String    @default("1080p")
+  resultVideoUrl    String?
+  thumbnailUrl      String?
+  creditsUsed       Int       @default(0)
+  errorMessage      String?
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([status])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model CreditTransaction {
+  id          String                @id @default(uuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int
+  type        CreditTransactionType
+  description String?
+  createdAt   DateTime              @default(now())
+
+  @@index([userId])
+}

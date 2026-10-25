@@ -18,7 +18,7 @@ generationRouter.post('/', async (req, res) => {
 
     const model = AVAILABLE_MODELS.find(m => m.id === request.modelId) || AVAILABLE_MODELS.find(m => m.isDefault)!;
 
-    const job = jobService.createJob(request, model);
+    const job = await jobService.createJob(request, model);
     await queueService.enqueue(job, request);
 
     res.status(202).json({

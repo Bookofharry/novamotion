@@ -20,7 +20,7 @@ RUN npm run build --workspace=@videolab/shared
 RUN npm run build --workspace=@videolab/web
 
 # --- Production Web Server Stage ---
-FROM nginx:alpine AS runner
+FROM nginx:1.27-alpine AS runner
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
