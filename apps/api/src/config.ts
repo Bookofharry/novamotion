@@ -13,19 +13,6 @@ export const CONFIG = {
 
 export const AVAILABLE_MODELS: VideoModelInfo[] = [
   {
-    id: 'mock-engine-v1',
-    name: 'VideoLab Ultra-Fast (Dev Mock)',
-    provider: 'mock',
-    description: 'Instant zero-cost development model with realistic simulation and curated HD outputs.',
-    supportsTextToVideo: true,
-    supportsImageToVideo: true,
-    supportedAspectRatios: ['16:9', '9:16', '1:1', '4:3', '21:9'],
-    supportedResolutions: ['720p', '1080p'],
-    supportedDurations: [5, 10],
-    costPerSecond: 0,
-    isDefault: true,
-  },
-  {
     id: 'runway-lite',
     name: 'Runway Budget Lite (2-3 credits/s)',
     provider: 'runway',
@@ -36,6 +23,7 @@ export const AVAILABLE_MODELS: VideoModelInfo[] = [
     supportedResolutions: ['720p'],
     supportedDurations: [5, 10],
     costPerSecond: 2,
+    isDefault: true,
   },
   {
     id: 'runway-gen4',

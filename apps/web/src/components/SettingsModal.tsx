@@ -160,7 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <div className="p-3 rounded-xl bg-teal-950/20 border border-teal-500/20 text-[11px] text-slate-300 flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
               <span>
-                You can generate unlimited videos for free without keys using the <strong>VideoLab Ultra-Fast (Dev Mock)</strong> model. External keys are only required for live Google Veo and Runway model calls.
+                Provider API keys are securely stored in runtime memory and environment variables. All video generation requests connect directly to live Runway and Google Veo endpoints.
               </span>
             </div>
 

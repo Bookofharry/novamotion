@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Runway Dev": {
+      "serverUrl": "https://dev.runwayml.com/mcp",
+      "url": "https://dev.runwayml.com/mcp"
+    }
+  }
+}
