@@ -24,11 +24,20 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-  if (allowed.includes(file.mimetype)) {
+  const allowed = [
+    'image/png', 
+    'image/jpeg', 
+    'image/jpg', 
+    'image/webp', 
+    'image/gif', 
+    'image/bmp', 
+    'image/avif', 
+    'image/svg+xml'
+  ];
+  if (allowed.includes(file.mimetype.toLowerCase()) || file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PNG, JPEG, and WEBP images are supported.'));
+    cb(new Error('Unsupported file type. Please upload an image (PNG, JPG, WEBP, AVIF, GIF).'));
   }
 };
 
@@ -36,25 +45,46 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 50 * 1024 * 1024, // 50MB
   },
 });
 
-uploadRouter.post('/', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    res.status(400).json({ success: false, error: 'No image file uploaded' });
-    return;
-  }
+uploadRouter.post('/', (req, res) => {
+  upload.single('image')(req, res, (err: any) => {
+    if (err) {
+      console.error('[UploadRouter] Multer error:', err.message);
+      return res.status(400).json({
+        success: false,
+        error: err.message || 'File upload failed',
+      });
+    }
 
-  const publicUrl = `/uploads/${req.file.filename}`;
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No image file uploaded' });
+    }
 
-  res.json({
-    success: true,
-    data: {
-      url: publicUrl,
-      filename: req.file.filename,
-      size: req.file.size,
-      mimetype: req.file.mimetype,
-    },
+    const publicUrl = `/uploads/${req.file.filename}`;
+    
+    let dataUri: string | undefined;
+    try {
+      const filePath = path.resolve(uploadDir, req.file.filename);
+      const fileBuffer = fs.readFileSync(filePath);
+      const base64Data = fileBuffer.toString('base64');
+      dataUri = `data:${req.file.mimetype || 'image/png'};base64,${base64Data}`;
+    } catch {
+      // ignore
+    }
+
+    res.json({
+      success: true,
+      data: {
+        url: publicUrl,
+        dataUri,
+        filename: req.file.filename,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+      },
+    });
   });
 });
+

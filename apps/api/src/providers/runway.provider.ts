@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { GenerateVideoRequest, VideoJob } from '@videolab/shared';
 import { IVideoProvider, ProviderInitiateResult, ProviderStatusResult } from './provider.interface.js';
 import { CONFIG } from '../config.js';
@@ -125,7 +127,19 @@ export class RunwayVideoProvider implements IVideoProvider {
     }
 
     if (isImageToVideo && request.referenceImageUrl) {
-      payload.promptImage = request.referenceImageUrl;
+      let imageUri = request.referenceImageUrl;
+      if (imageUri.startsWith('/uploads/')) {
+        const filename = imageUri.replace('/uploads/', '');
+        const uploadsDir = path.resolve(process.cwd(), 'uploads');
+        const localPath = path.resolve(uploadsDir, filename);
+        if (fs.existsSync(localPath)) {
+          const ext = path.extname(localPath).replace('.', '').toLowerCase() || 'png';
+          const mime = ext === 'jpg' ? 'jpeg' : ext;
+          const base64 = fs.readFileSync(localPath).toString('base64');
+          imageUri = `data:image/${mime};base64,${base64}`;
+        }
+      }
+      payload.promptImage = imageUri;
     }
 
     // Model specific parameter mappings

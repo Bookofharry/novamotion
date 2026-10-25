@@ -77,15 +77,20 @@ export async function fetchCredits(): Promise<UserCredits> {
   return data.data;
 }
 
-export async function uploadReferenceImage(file: File): Promise<{ url: string; filename: string }> {
+export async function uploadReferenceImage(file: File): Promise<{ url: string; filename: string; dataUri?: string }> {
   const formData = new FormData();
   formData.append('image', file);
   const res = await fetch(`${BASE_URL}/upload`, {
     method: 'POST',
     body: formData,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to upload image');
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Upload server error (${res.status} ${res.statusText})`);
+  }
+  if (!res.ok) throw new Error(data?.error || `Failed to upload image (${res.status})`);
   return data.data;
 }
 

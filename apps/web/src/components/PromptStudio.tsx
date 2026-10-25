@@ -129,35 +129,48 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processImageFile = async (file: File) => {
     setIsUploadingImage(true);
     try {
-      const res = await uploadReferenceImage(file);
-      setReferenceImageUrl(res.url);
+      // 1. Instant local client-side preview via FileReader (guaranteed zero latency)
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const localDataUri = event.target?.result as string;
+        if (localDataUri) {
+          setReferenceImageUrl(localDataUri);
+        }
+      };
+      reader.readAsDataURL(file);
+
+      // 2. Also upload to server for persistence
+      try {
+        const res = await uploadReferenceImage(file);
+        if (res.dataUri) {
+          setReferenceImageUrl(res.dataUri);
+        } else if (res.url) {
+          setReferenceImageUrl(res.url);
+        }
+      } catch (uploadErr) {
+        console.warn('[PromptStudio] Background server upload failed, relying on client Data URI:', uploadErr);
+      }
     } catch (err: any) {
-      alert(`Image upload failed: ${err.message || 'Unknown error'}`);
+      alert(`Image processing failed: ${err.message || 'Unknown error'}`);
     } finally {
       setIsUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processImageFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
-
-    setIsUploadingImage(true);
-    try {
-      const res = await uploadReferenceImage(file);
-      setReferenceImageUrl(res.url);
-    } catch (err: any) {
-      alert(`Image upload failed: ${err.message || 'Unknown error'}`);
-    } finally {
-      setIsUploadingImage(false);
+    if (file && (file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(file.name))) {
+      processImageFile(file);
     }
   };
 
@@ -385,7 +398,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/*, .png, .jpg, .jpeg, .webp, .avif, .gif, .bmp"
                 className="hidden"
               />
               <button
