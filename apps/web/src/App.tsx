@@ -152,6 +152,7 @@ export function App() {
         setActiveTab={setActiveTab}
         credits={credits}
         activeJobsCount={activeJobs.length}
+        completedJobsCount={jobs.filter(j => j.status === 'COMPLETED').length}
         onOpenJobDrawer={() => setIsJobDrawerOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenPricing={() => setIsPricingOpen(true)}
