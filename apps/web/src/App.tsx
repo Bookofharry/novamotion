@@ -158,7 +158,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-6">
         {activeTab === 'studio' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
