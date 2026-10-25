@@ -80,25 +80,29 @@ class JobService {
 
     this.jobsCache.set(id, job);
 
-    // Asynchronously persist to database
-    prisma.videoJob.create({
-      data: {
-        id: job.id,
-        prompt: job.prompt,
-        enhancedPrompt: job.enhancedPrompt,
-        negativePrompt: job.negativePrompt,
-        referenceImageUrl: job.referenceImageUrl,
-        modelId: job.modelId,
-        provider: job.provider,
-        status: 'PENDING',
-        progress: 0,
-        aspectRatio: job.aspectRatio,
-        duration: job.duration,
-        resolution: job.resolution,
-        creditsUsed: job.creditsUsed,
-        projectId: request.projectId,
-      },
-    }).catch(e => console.warn('[JobService] DB persist error on create:', e.message));
+    // Persist to database
+    try {
+      await prisma.videoJob.create({
+        data: {
+          id: job.id,
+          prompt: job.prompt,
+          enhancedPrompt: job.enhancedPrompt,
+          negativePrompt: job.negativePrompt,
+          referenceImageUrl: job.referenceImageUrl,
+          modelId: job.modelId,
+          provider: job.provider,
+          status: 'PENDING',
+          progress: 0,
+          aspectRatio: job.aspectRatio,
+          duration: job.duration,
+          resolution: job.resolution,
+          creditsUsed: job.creditsUsed,
+          projectId: request.projectId,
+        },
+      });
+    } catch (e: any) {
+      console.warn('[JobService] DB persist error on create:', e.message);
+    }
 
     return job;
   }
@@ -128,11 +132,11 @@ class JobService {
 
     this.jobsCache.set(id, updated);
 
-    // Persist status updates asynchronously (especially on progress change or completion)
+    // Persist status updates (using upsert so record is never reported missing)
     if (updates.status || updates.resultVideoUrl || updates.progress === 100 || updates.errorMessage) {
-      prisma.videoJob.update({
+      prisma.videoJob.upsert({
         where: { id },
-        data: {
+        update: {
           status: updated.status as any,
           progress: updated.progress,
           resultVideoUrl: updated.resultVideoUrl,
@@ -140,6 +144,22 @@ class JobService {
           providerJobId: updated.providerJobId,
           errorMessage: updated.errorMessage,
           completedAt: updated.completedAt ? new Date(updated.completedAt) : undefined,
+        },
+        create: {
+          id: updated.id,
+          prompt: updated.prompt,
+          enhancedPrompt: updated.enhancedPrompt,
+          negativePrompt: updated.negativePrompt,
+          referenceImageUrl: updated.referenceImageUrl,
+          modelId: updated.modelId,
+          provider: updated.provider,
+          status: updated.status as any,
+          progress: updated.progress,
+          aspectRatio: updated.aspectRatio,
+          duration: updated.duration,
+          resolution: updated.resolution,
+          creditsUsed: updated.creditsUsed,
+          errorMessage: updated.errorMessage,
         },
       }).catch(e => console.warn('[JobService] DB persist error on update:', e.message));
     }

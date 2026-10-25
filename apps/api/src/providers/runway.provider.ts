@@ -17,7 +17,7 @@ export class RunwayVideoProvider implements IVideoProvider {
       case 'gen4-turbo':
         return 'gen4_turbo';
       case 'wan3-prime':
-        return 'wan3_prime';
+        return 'wan3';
       case 'h3-max':
         return 'h3_max';
       case 'grok-imagine-1-5-lite':
@@ -107,10 +107,19 @@ export class RunwayVideoProvider implements IVideoProvider {
       );
     }
 
-    // For Runway Lite: uses fast gen4_turbo when image is provided, or fast grok_imagine_1_5_lite for text
+    // For Runway Lite: uses fast gen4_turbo when image is provided, or flagship gen4.5 for text
     const effectiveModel = isRunwayLite
-      ? (request.referenceImageUrl ? 'gen4_turbo' : 'grok_imagine_1_5_lite')
+      ? (request.referenceImageUrl ? 'gen4_turbo' : 'gen4.5')
       : providerModel;
+
+    // Determine max single-pass duration allowed by upstream model API
+    let maxSupportedDuration = 15;
+    if (providerModel === 'wan3') {
+      maxSupportedDuration = 30;
+    } else if (effectiveModel === 'gen4_turbo' || effectiveModel === 'gen4.5') {
+      maxSupportedDuration = 10;
+    }
+    const safeDuration = Math.min(request.duration || 5, maxSupportedDuration);
 
     const promptText = request.enhancedPrompt || request.prompt;
     const endpoint = isImageToVideo 
@@ -119,7 +128,7 @@ export class RunwayVideoProvider implements IVideoProvider {
 
     const payload: Record<string, any> = {
       model: effectiveModel,
-      duration: request.duration || 5,
+      duration: safeDuration,
     };
 
     if (promptText) {
@@ -145,9 +154,9 @@ export class RunwayVideoProvider implements IVideoProvider {
     // Model specific parameter mappings
     if (providerModel === 'h3_max') {
       payload.resolution = request.resolution === '480p' ? '480p' : '768p';
-    } else if (providerModel === 'gen4_turbo' || providerModel === 'runway_lite') {
+    } else if (effectiveModel === 'gen4_turbo' || effectiveModel === 'gen4.5') {
       payload.ratio = this.mapRatioForGen4Turbo(request.aspectRatio);
-    } else if (providerModel === 'wan3_prime') {
+    } else if (providerModel === 'wan3') {
       payload.ratio = this.mapRatioForWan3(request.aspectRatio, request.resolution);
     } else {
       payload.ratio = this.mapRatioForGrok(request.aspectRatio, request.resolution);
