@@ -14,6 +14,7 @@ import {
   UserCredits, 
   GenerateVideoRequest 
 } from '@videolab/shared';
+import { AdminStudio } from './components/AdminStudio.js';
 import { 
   fetchModels, 
   fetchCredits, 
@@ -23,7 +24,7 @@ import {
 } from './services/api.js';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'gallery' | 'models' | 'sequencer' | 'audio'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'gallery' | 'models' | 'sequencer' | 'audio' | 'admin'>('studio');
   const [models, setModels] = useState<VideoModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<VideoModelInfo | null>(null);
   const [credits, setCredits] = useState<UserCredits | null>(null);
@@ -233,6 +234,23 @@ export function App() {
 
         {activeTab === 'models' && (
           <ModelStatus models={models} />
+        )}
+
+        {activeTab === 'admin' && (
+          <AdminStudio
+            onRefreshCredits={async () => {
+              const creds = await fetchCredits();
+              setCredits(creds);
+            }}
+            onPreviewVideo={(videoUrl, title) => {
+              setActiveVideo({
+                url: videoUrl,
+                ratio: '16:9',
+                title,
+              });
+              setActiveTab('studio');
+            }}
+          />
         )}
       </main>
 

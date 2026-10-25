@@ -192,6 +192,7 @@ export class RunwayVideoProvider implements IVideoProvider {
           progress: 100,
           resultVideoUrl: data.output[0],
           thumbnailUrl: data.output[0],
+          costCredits: data.cost?.credits,
         };
       }
 

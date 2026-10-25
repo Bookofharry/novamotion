@@ -159,6 +159,16 @@ class JobService {
 
     return updated;
   }
+
+  async deleteJob(id: string): Promise<boolean> {
+    this.jobsCache.delete(id);
+    try {
+      await prisma.videoJob.delete({ where: { id } });
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export const jobService = new JobService();

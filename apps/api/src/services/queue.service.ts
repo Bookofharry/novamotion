@@ -49,6 +49,7 @@ class QueueService {
             resultVideoUrl: statusResult.resultVideoUrl,
             thumbnailUrl: statusResult.thumbnailUrl,
             errorMessage: statusResult.errorMessage,
+            providerCostCredits: statusResult.costCredits,
           });
 
           if (statusResult.status === 'COMPLETED' || statusResult.status === 'FAILED' || statusResult.status === 'CANCELLED') {

@@ -153,3 +153,56 @@ export async function addAudioToVideo(params: AddAudioRequest): Promise<Composit
   if (!res.ok) throw new Error(data.error || 'Failed to attach audio soundtrack');
   return data.data;
 }
+
+export async function fetchPlatformAudit(): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/audit`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch platform audit');
+  return data.data;
+}
+
+export async function adjustUserCredits(amount: number): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/credits/adjust`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to adjust credits');
+  return data.data;
+}
+
+export async function setPlatformMarkup(multiplier: number): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/markup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ multiplier }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update markup');
+  return data.data;
+}
+
+export async function syncJobWithRunway(jobId: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}/admin/jobs/${jobId}/sync`, {
+    method: 'POST',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to sync job with Runway');
+  return data.data;
+}
+
+export async function deleteJob(jobId: string): Promise<boolean> {
+  const res = await fetch(`${BASE_URL}/admin/jobs/${jobId}`, {
+    method: 'DELETE',
+  });
+  const data = await res.json();
+  return data.success;
+}
+
+export async function checkRunwayStatus(): Promise<{ ok: boolean; latencyMs: number; message: string }> {
+  const res = await fetch(`${BASE_URL}/admin/runway-status`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to test Runway status');
+  return data.data;
+}

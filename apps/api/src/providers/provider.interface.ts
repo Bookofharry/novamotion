@@ -11,6 +11,7 @@ export interface ProviderStatusResult {
   resultVideoUrl?: string;
   thumbnailUrl?: string;
   errorMessage?: string;
+  costCredits?: number;
 }
 
 export interface IVideoProvider {

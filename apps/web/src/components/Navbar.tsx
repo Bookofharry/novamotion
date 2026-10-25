@@ -1,10 +1,9 @@
-import React from 'react';
-import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music } from 'lucide-react';
+import { Video, Sparkles, Layers, Coins, Activity, Settings, Clapperboard, Music, ShieldCheck } from 'lucide-react';
 import { UserCredits } from '@videolab/shared';
 
 interface NavbarProps {
-  activeTab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio';
-  setActiveTab: (tab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio') => void;
+  activeTab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio' | 'admin';
+  setActiveTab: (tab: 'studio' | 'gallery' | 'models' | 'sequencer' | 'audio' | 'admin') => void;
   credits: UserCredits | null;
   activeJobsCount: number;
   onOpenJobDrawer: () => void;
@@ -97,6 +96,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Activity className="w-3.5 h-3.5" />
             Models
+          </button>
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'admin'
+                ? 'bg-gradient-to-r from-emerald-500/25 to-teal-500/25 text-emerald-300 border border-emerald-500/50 shadow-sm'
+                : 'text-emerald-400/90 hover:text-emerald-300 hover:bg-emerald-500/10'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Admin</span>
+            <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded uppercase font-mono font-bold">
+              Free
+            </span>
           </button>
         </nav>
 

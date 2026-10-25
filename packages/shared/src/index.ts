@@ -51,6 +51,7 @@ export interface VideoJob {
   resultVideoUrl?: string;
   thumbnailUrl?: string;
   creditsUsed: number;
+  providerCostCredits?: number;
   errorMessage?: string;
   createdAt: string;
   updatedAt: string;
@@ -122,3 +123,52 @@ export interface AddAudioRequest {
   volume?: number; // 0.0 to 1.0
   loopAudio?: boolean;
 }
+
+export interface ModelAuditStat {
+  modelId: string;
+  modelName: string;
+  totalJobs: number;
+  completedJobs: number;
+  runwayCostCredits: number;
+  runwayCostUsd: number;
+  userChargedCredits: number;
+  userChargedUsd: number;
+  marginUsd: number;
+}
+
+export interface JobAuditDetail {
+  id: string;
+  createdAt: string;
+  prompt: string;
+  modelId: string;
+  modelName: string;
+  duration: number;
+  resolution: string;
+  aspectRatio: string;
+  status: JobStatus;
+  providerCostCredits: number;
+  providerCostUsd: number;
+  userChargedCredits: number;
+  userChargedUsd: number;
+  marginUsd: number;
+  resultVideoUrl?: string;
+  referenceImageUrl?: string;
+  providerJobId?: string;
+}
+
+export interface PlatformAuditSummary {
+  totalJobs: number;
+  completedJobs: number;
+  failedJobs: number;
+  processingJobs: number;
+  totalRunwayCostCredits: number;
+  totalRunwayCostUsd: number;
+  totalUserChargedCredits: number;
+  totalUserChargedUsd: number;
+  netProfitUsd: number;
+  marginPercentage: number;
+  markupMultiplier: number;
+  modelStats: ModelAuditStat[];
+  jobs: JobAuditDetail[];
+}
+
