@@ -51,7 +51,7 @@ export class MockVideoProvider implements IVideoProvider {
       startedAt: Date.now(),
       durationMs,
       videoUrl: matched.url,
-      thumbnailUrl: matched.thumb,
+      thumbnailUrl: request.referenceImageUrl || matched.thumb,
     });
 
     return {

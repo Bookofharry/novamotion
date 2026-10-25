@@ -72,3 +72,16 @@ export async function fetchCredits(): Promise<UserCredits> {
   const data = await res.json();
   return data.data;
 }
+
+export async function uploadReferenceImage(file: File): Promise<{ url: string; filename: string }> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await fetch(`${BASE_URL}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to upload image');
+  return data.data;
+}
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Sparkles, 
   Wand2, 
@@ -9,7 +9,11 @@ import {
   ChevronUp, 
   Film,
   Zap,
-  Info
+  Info,
+  Upload,
+  X,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   AspectRatio, 
@@ -18,7 +22,7 @@ import {
   VideoModelInfo, 
   GenerateVideoRequest 
 } from '@videolab/shared';
-import { enhancePrompt } from '../services/api.js';
+import { enhancePrompt, uploadReferenceImage } from '../services/api.js';
 
 interface PromptStudioProps {
   models: VideoModelInfo[];
@@ -59,8 +63,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   const [resolution, setResolution] = useState<VideoResolution>('1080p');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<'cinematic' | 'cyberpunk' | 'photorealistic' | 'anime' | '3d-render'>('cinematic');
   const [selectedCamera, setSelectedCamera] = useState<'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'drone-shot' | 'orbital'>('zoom-in');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEnhance = async () => {
     if (!prompt.trim()) return;
@@ -79,6 +86,38 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
       console.error(err);
     } finally {
       setIsEnhancing(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const res = await uploadReferenceImage(file);
+      setReferenceImageUrl(res.url);
+    } catch (err: any) {
+      alert(`Image upload failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    setIsUploadingImage(true);
+    try {
+      const res = await uploadReferenceImage(file);
+      setReferenceImageUrl(res.url);
+    } catch (err: any) {
+      alert(`Image upload failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -150,9 +189,16 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
         {/* Prompt Input & AI Enhancer */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Visual Prompt
-            </label>
+            <div className="flex items-center gap-2">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Visual Prompt
+              </label>
+              {referenceImageUrl && (
+                <span className="flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  <ImageIcon className="w-3 h-3" /> Image-to-Video Active
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <select
                 value={selectedStyle}
@@ -194,7 +240,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               rows={3}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe your scene in detail... (e.g., A cinematic drone shot over ancient emerald waterfall ruins, golden dawn light)"
+              placeholder={
+                referenceImageUrl 
+                  ? "Describe how this reference image should move and animate... (e.g. Character turns and smiles gently, wind blows through hair)"
+                  : "Describe your scene in detail... (e.g., A cinematic drone shot over ancient emerald waterfall ruins, golden dawn light)"
+              }
               className="w-full bg-surface-elevated/80 border border-white/10 rounded-xl p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
             />
             <div className="absolute right-3 bottom-3 text-[10px] text-slate-500 font-mono">
@@ -321,7 +371,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
         </div>
 
-        {/* Advanced Options Accordion */}
+        {/* Advanced Options Accordion (Image-to-Video Uploader) */}
         <div className="border-t border-white/10 pt-4">
           <button
             type="button"
@@ -329,36 +379,105 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Advanced Controls (Image-to-Video, Negative Prompt)</span>
+            <span>Image-to-Video & Negative Prompt Settings</span>
             {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
           {showAdvanced && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block text-xs text-slate-400 font-medium mb-1 flex items-center gap-1">
-                  <ImageIcon className="w-3.5 h-3.5" /> Reference Image URL (Image-to-Video)
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              
+              {/* Image-to-Video File Uploader */}
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-300 font-semibold flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> Reference Starter Image (Image-to-Video)
+                  </span>
+                  {referenceImageUrl && (
+                    <span className="text-[10px] text-teal-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Image Loaded
+                    </span>
+                  )}
                 </label>
+
+                {referenceImageUrl ? (
+                  <div className="relative rounded-xl border border-teal-500/40 bg-surface-elevated/60 p-2 flex items-center gap-3 overflow-hidden">
+                    <img 
+                      src={referenceImageUrl} 
+                      alt="Reference" 
+                      className="w-16 h-16 object-cover rounded-lg border border-white/10"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-white truncate">Reference Frame</p>
+                      <p className="text-[10px] text-slate-400 font-mono truncate">{referenceImageUrl}</p>
+                      <span className="text-[10px] text-teal-300 font-medium">Ready to animate</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReferenceImageUrl('')}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="cursor-pointer border-2 border-dashed border-white/10 hover:border-teal-500/50 bg-surface-elevated/30 hover:bg-surface-elevated/60 rounded-xl p-4 text-center transition-all flex flex-col items-center justify-center gap-1.5"
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload} 
+                      accept="image/png,image/jpeg,image/webp" 
+                      className="hidden" 
+                    />
+                    {isUploadingImage ? (
+                      <div className="flex items-center gap-2 text-xs text-teal-300 py-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Uploading image...
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 text-slate-400" />
+                        <span className="text-xs font-medium text-slate-200">
+                          Drop reference image here, or <span className="text-teal-400 underline">browse</span>
+                        </span>
+                        <span className="text-[10px] text-slate-500">Supports PNG, JPG, WEBP (up to 10MB)</span>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Direct Image URL input */}
                 <input
                   type="url"
                   value={referenceImageUrl}
                   onChange={(e) => setReferenceImageUrl(e.target.value)}
-                  placeholder="https://example.com/character-frame.png"
+                  placeholder="Or paste external image URL (https://...)"
                   className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-slate-400 font-medium mb-1">
+
+              {/* Negative Prompt */}
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-300 font-semibold">
                   Negative Prompt (Elements to avoid)
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={4}
                   value={negativePrompt}
                   onChange={(e) => setNegativePrompt(e.target.value)}
-                  placeholder="e.g. morphing, jitter, artifacts, watermark"
-                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none"
+                  placeholder="e.g. morphing artifacts, distorted anatomy, jitter, low resolution, blurry, watermark"
+                  className="w-full bg-surface-elevated text-xs text-slate-200 rounded-lg p-2.5 border border-white/10 focus:border-teal-500 outline-none resize-none leading-relaxed"
                 />
+                <span className="text-[10px] text-slate-500 block">
+                  Instructs the generative model to exclude visual defects or unwanted styles.
+                </span>
               </div>
+
             </div>
           )}
         </div>
@@ -381,6 +500,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               <>
                 <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 Queueing Generation...
+              </>
+            ) : referenceImageUrl ? (
+              <>
+                <ImageIcon className="w-4 h-4 font-bold" />
+                Animate Image (Image-to-Video)
               </>
             ) : (
               <>
