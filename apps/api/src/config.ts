@@ -60,7 +60,7 @@ export const AVAILABLE_MODELS: VideoModelInfo[] = [
     supportsImageToVideo: true,
     supportedAspectRatios: ['auto', '16:9', '9:16', '1:1', '4:3'],
     supportedResolutions: ['480p', '720p', '1080p'],
-    supportedDurations: [2, 5, 10, 15],
+    supportedDurations: [2, 5, 10, 15, 30],
     costPerSecond: 14,
     isDefault: false,
   },
