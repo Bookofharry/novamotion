@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, 
   Wand2, 
@@ -12,7 +12,8 @@ import {
   Upload,
   X,
   Loader2,
-  RotateCcw
+  RotateCcw,
+  AlertCircle
 } from 'lucide-react';
 import { 
   AspectRatio, 
@@ -31,7 +32,8 @@ interface PromptStudioProps {
   isSubmitting: boolean;
 }
 
-const ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] = [
+const ALL_ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] = [
+  { ratio: 'auto', label: 'Auto (Model picks ratio)', iconClass: 'w-5 h-4 border-2 border-dashed' },
   { ratio: '16:9', label: 'Landscape (16:9)', iconClass: 'w-6 h-3.5 border-2' },
   { ratio: '9:16', label: 'Portrait / Reels (9:16)', iconClass: 'w-3.5 h-6 border-2' },
   { ratio: '1:1', label: 'Square (1:1)', iconClass: 'w-5 h-5 border-2' },
@@ -40,18 +42,20 @@ const ASPECT_RATIOS: { ratio: AspectRatio; label: string; iconClass: string }[] 
 
 const PRESET_PROMPTS = [
   'A majestic white dove soaring peacefully across a radiant sunrise sky above calm sapphire waters',
+  'The paper dragon lifts its head, unfurls its wings, and launches from the desk as loose sketches flutter through warm window light, smooth handheld push-in.',
+  'Raindrops freeze in midair then drift sideways; the bronze horse statue\'s tail unspools into copper wire that coils in a warm wind; camera slow push-in, wet plaza stays, photoreal.',
   'A neon-lit cyberpunk samurai standing under rain in futuristic Neo-Tokyo alleyway',
-  'Underwater bioluminescent jellyfish dance in crystal clear deep ocean waters',
-  'Vintage matte black sports car accelerating along coastal cliff highway at golden hour',
 ];
 
 export const PromptStudio: React.FC<PromptStudioProps> = ({
   models,
   selectedModel,
-  onSelectModel: _onSelectModel,
+  onSelectModel,
   onSubmit,
   isSubmitting,
 }) => {
+  const activeModel = selectedModel || models[0];
+
   const [prompt, setPrompt] = useState('');
   const [enhancedPrompt, setEnhancedPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
@@ -66,6 +70,26 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   const [selectedCamera, setSelectedCamera] = useState<'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'drone-shot' | 'orbital'>('zoom-in');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Synchronize defaults when active model changes
+  useEffect(() => {
+    if (!activeModel) return;
+
+    // Check resolution validity
+    if (!activeModel.supportedResolutions.includes(resolution)) {
+      setResolution(activeModel.supportedResolutions[0] || '720p');
+    }
+
+    // Check duration validity
+    if (!activeModel.supportedDurations.includes(duration)) {
+      setDuration(activeModel.supportedDurations[0] || 5);
+    }
+
+    // Check aspect ratio validity
+    if (!activeModel.supportedAspectRatios.includes(aspectRatio)) {
+      setAspectRatio(activeModel.supportedAspectRatios[0] || '16:9');
+    }
+  }, [activeModel?.id]);
 
   const handleEnhance = async () => {
     if (!prompt.trim()) return;
@@ -124,19 +148,26 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     setEnhancedPrompt('');
     setNegativePrompt('');
     setReferenceImageUrl('');
-    setAspectRatio('16:9');
-    setDuration(5);
-    setResolution('720p');
+    setAspectRatio(activeModel?.supportedAspectRatios[0] || '16:9');
+    setDuration(activeModel?.supportedDurations[0] || 5);
+    setResolution(activeModel?.supportedResolutions[0] || '720p');
     setShowAdvanced(false);
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const activeModel = selectedModel || models[0];
-    if (!prompt.trim() || !activeModel || isSubmitting) return;
+    if (!activeModel || isSubmitting) return;
+
+    // Gen-4 Turbo requires an image
+    if (activeModel.id === 'gen4-turbo' && !referenceImageUrl.trim()) {
+      alert('Gen-4 Turbo requires a starter image (first frame). Please paste an image URL or upload an image.');
+      return;
+    }
+
+    if (!prompt.trim() && !referenceImageUrl.trim()) return;
 
     await onSubmit({
-      prompt: prompt.trim(),
+      prompt: prompt.trim() || 'Animate this reference image seamlessly',
       enhancedPrompt: enhancedPrompt.trim() || undefined,
       negativePrompt: negativePrompt.trim() || undefined,
       referenceImageUrl: referenceImageUrl.trim() || undefined,
@@ -147,92 +178,173 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     });
   };
 
-  const getCostPerSecond = (res: VideoResolution) => {
-    if (res === '480p') return 2;
-    if (res === '720p') return 3;
-    if (res === '1080p') return 14;
-    return 3;
+  // Model-specific pricing calculation
+  const calculateCost = (): { total: number; rateLabel: string; subtext: string } => {
+    const mId = activeModel?.id;
+
+    if (mId === 'gen4-turbo') {
+      const total = Math.max(10, duration * 5);
+      return {
+        total,
+        rateLabel: `5 credits/s (min 10 credits)`,
+        subtext: `5 credits per second of video (minimum 10 credits).`,
+      };
+    }
+
+    if (mId === 'wan3-prime') {
+      let rate = 14;
+      if (resolution === '480p') rate = 6.8;
+      else if (resolution === '1080p') rate = 28;
+      const total = Math.round(duration * rate * 10) / 10;
+      return {
+        total,
+        rateLabel: `${rate} credits/s`,
+        subtext: `6.8 credits per second at 480p, 14 at 720p, 28 at 1080p.`,
+      };
+    }
+
+    if (mId === 'h3-max') {
+      const rate = resolution === '480p' ? 5 : 8;
+      const effectiveDur = Math.max(5, duration);
+      const total = effectiveDur * rate;
+      return {
+        total,
+        rateLabel: `${rate} credits/s (5s min)`,
+        subtext: `5 credits per second at 480p, 8 credits per second at 768p (5 second minimum).`,
+      };
+    }
+
+    // Grok Imagine Video 1.5 Lite
+    let rate = 3;
+    if (resolution === '480p') rate = 2;
+    else if (resolution === '1080p') rate = 14;
+    const total = duration * rate + (referenceImageUrl ? 1 : 0);
+    return {
+      total,
+      rateLabel: `${rate} credits/s`,
+      subtext: `2 credits per second at 480p, 3 at 720p, 14 at 1080p (720p upscaled). An image-to-video start frame adds 1 credit.`,
+    };
   };
 
-  const currentCost = (duration * getCostPerSecond(resolution)) + (referenceImageUrl ? 1 : 0);
-  const activeModel = selectedModel || models[0];
+  const costInfo = calculateCost();
+  const isGen4 = activeModel?.id === 'gen4-turbo';
+  const supportedRatios = ALL_ASPECT_RATIOS.filter(ar => 
+    activeModel?.supportedAspectRatios.includes(ar.ratio)
+  );
 
   return (
     <div className="w-full space-y-6">
       <form onSubmit={handleGenerate} className="glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
         
-        {/* Generative Model Provider Card */}
+        {/* Model Selection Grid */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Generative Model Provider
             </label>
             <span className="text-[11px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2.5 py-0.5 rounded-full">
-              xAI Distilled Architecture
+              4 Live Studio Engines Available
             </span>
           </div>
 
-          <div className="rounded-xl p-4 border bg-gradient-to-r from-teal-950/40 via-surface-elevated/70 to-slate-900/60 border-teal-500/40 shadow-lg shadow-teal-950/20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-base text-white tracking-wide">
-                    {activeModel?.name || 'Grok Imagine Video 1.5 Lite'}
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    Runway / xAI
-                  </span>
-                  <span className="text-[10px] font-semibold text-teal-300 bg-teal-500/20 border border-teal-500/30 px-2 py-0.5 rounded-full">
-                    ★ Selected Engine
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed max-w-xl">
-                  Very fast, low-cost text- and image-to-video distilled from Grok Imagine Video 1.5.
-                </p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {models.map((m) => {
+              const isSelected = activeModel?.id === m.id;
+              let badgeColor = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
+              let badgeText = 'xAI';
+              let rateTag = '2-14 c/s';
 
-              {/* Pricing Rate Matrix */}
-              <div className="flex items-center gap-2 flex-wrap text-[11px] font-mono">
-                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
-                  resolution === '480p' 
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-bold' 
-                    : 'bg-black/40 border-white/10 text-emerald-300/80'
-                }`}>
-                  480p: 2 credits/s
-                </span>
-                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
-                  resolution === '720p' 
-                    ? 'bg-teal-500/20 border-teal-400 text-teal-200 font-bold' 
-                    : 'bg-black/40 border-teal-500/30 text-teal-300/80'
-                }`}>
-                  720p: 3 credits/s
-                </span>
-                <span className={`px-2.5 py-1 rounded-lg border transition-all ${
-                  resolution === '1080p' 
-                    ? 'bg-purple-500/20 border-purple-400 text-purple-200 font-bold' 
-                    : 'bg-black/40 border-white/10 text-purple-300/80'
-                }`}>
-                  1080p: 14 credits/s
-                </span>
-              </div>
-            </div>
+              if (m.id === 'gen4-turbo') {
+                badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+                badgeText = 'Runway';
+                rateTag = '5 c/s (min 10c)';
+              } else if (m.id === 'wan3-prime') {
+                badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                badgeText = 'Alibaba';
+                rateTag = '6.8-28 c/s';
+              } else if (m.id === 'h3-max') {
+                badgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+                badgeText = 'MiniMax';
+                rateTag = '5-8 c/s';
+              }
+
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => onSelectModel(m)}
+                  className={`cursor-pointer rounded-xl p-3.5 border transition-all text-left flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-teal-500/20 to-teal-950/40 border-teal-500 shadow-md shadow-teal-500/15'
+                      : 'bg-surface-elevated/40 border-white/5 hover:border-white/20 hover:bg-surface-elevated/70'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-bold text-sm text-white tracking-tight">{m.name}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${badgeColor}`}>
+                        {badgeText}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300/90 line-clamp-2 leading-relaxed mb-2">
+                      {m.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-teal-400 font-semibold">{rateTag}</span>
+                    {isSelected && (
+                      <span className="text-teal-300 font-sans font-bold text-[10px] uppercase tracking-wider">
+                        ★ Active
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Image (first frame) Input */}
+        {/* Gen-4 Turbo Notice (if selected) */}
+        {isGen4 && (
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/40 text-cyan-200 text-xs">
+            <AlertCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span>
+              <strong>Gen-4 Turbo Mode:</strong> Runway's fastest Image-to-Video model. Please paste an image URL or upload your starter frame below.
+            </span>
+          </div>
+        )}
+
+        {/* Image (first frame) / Keyframes Input */}
         <div 
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className="rounded-xl border border-white/10 bg-surface-elevated/40 p-4 space-y-3"
+          className={`rounded-xl border p-4 space-y-3 transition-colors ${
+            isGen4 
+              ? 'border-cyan-500/40 bg-cyan-950/20' 
+              : 'border-white/10 bg-surface-elevated/40'
+          }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> Image (first frame)
+              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> 
+                {activeModel?.id === 'wan3-prime' || activeModel?.id === 'h3-max' 
+                  ? 'Keyframes (start and end frame)' 
+                  : 'Image (first frame)'}
               </label>
-              <span className="text-[10px] text-teal-400/90 font-mono bg-teal-500/10 px-2 py-0.5 rounded">
-                +1 credit
-              </span>
+              {isGen4 ? (
+                <span className="text-[10px] text-amber-300 font-mono bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded font-bold">
+                  Required
+                </span>
+              ) : activeModel?.id === 'grok-imagine-1-5-lite' ? (
+                <span className="text-[10px] text-teal-400 font-mono bg-teal-500/10 px-2 py-0.5 rounded">
+                  +1 credit
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400 font-mono">
+                  Optional starter frame
+                </span>
+              )}
             </div>
             {referenceImageUrl && (
               <button
@@ -250,7 +362,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               type="url"
               value={referenceImageUrl}
               onChange={(e) => setReferenceImageUrl(e.target.value)}
-              placeholder="Paste an image URL"
+              placeholder="Paste an image URL (e.g. https://...)"
               className="flex-1 w-full bg-surface-elevated text-xs text-slate-100 placeholder:text-slate-500 rounded-lg px-3 py-2.5 border border-white/10 focus:border-teal-500 outline-none font-mono"
             />
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -268,7 +380,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                 className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center justify-center gap-1.5"
               >
                 {isUploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                Upload
+                Upload File
               </button>
             </div>
           </div>
@@ -281,7 +393,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                 className="w-12 h-12 object-cover rounded-lg border border-teal-500/50 shadow"
               />
               <div className="text-[11px] text-slate-300 truncate font-mono">
-                <span className="text-teal-400 font-semibold font-sans">Active First Frame:</span> {referenceImageUrl}
+                <span className="text-teal-400 font-semibold font-sans">Active Reference Frame:</span> {referenceImageUrl}
               </div>
             </div>
           )}
@@ -292,7 +404,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Visual Prompt
+                Visual Prompt*
               </label>
               {referenceImageUrl && (
                 <span className="flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
@@ -342,9 +454,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={
-                referenceImageUrl 
-                  ? "Describe motion for this image... (e.g. Dove flutters its wings and takes off into the sky, soft camera tilt up)"
-                  : "Describe your scene in detail... (e.g., A beautiful white dove flying gracefully in blue sky, cinematic lighting)"
+                isGen4
+                  ? "Describe motion for the image... (e.g. Smooth camera forward push-in, water cascades down rocks, character turns gracefully)"
+                  : referenceImageUrl 
+                  ? "Describe how the first frame should animate... (e.g. Paper dragon lifts head, unfurls wings, launches from desk into window light)"
+                  : "Describe your scene in detail... (e.g., A majestic white dove soaring peacefully across sunrise sky above sapphire waters)"
               }
               className="w-full bg-surface-elevated/80 border border-white/10 rounded-xl p-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500 transition-colors resize-none leading-relaxed"
             />
@@ -356,7 +470,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
           {/* Quick Presets */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <span className="text-[11px] text-slate-500 flex items-center gap-1 mr-1">
-              <Zap className="w-3 h-3 text-amber-400" /> Ideas:
+              <Zap className="w-3 h-3 text-amber-400" /> Presets:
             </span>
             {PRESET_PROMPTS.map((sample, i) => (
               <button
@@ -392,7 +506,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
           )}
         </div>
 
-        {/* Video Parameters Controls */}
+        {/* Parameters: Resolution, Duration, Aspect Ratio */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
           
           {/* Resolution */}
@@ -400,10 +514,20 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Resolution*
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['480p', '720p', '1080p'] as VideoResolution[]).map((res) => {
+            <div className={`grid gap-2 ${activeModel?.supportedResolutions.length === 2 ? 'grid-cols-2' : activeModel?.supportedResolutions.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+              {activeModel?.supportedResolutions.map((res) => {
                 const active = resolution === res;
-                const rateLabel = res === '480p' ? '2 c/s' : res === '720p' ? '3 c/s' : '14 c/s';
+                let rate = '';
+                if (activeModel.id === 'wan3-prime') {
+                  rate = res === '480p' ? '6.8 c/s' : res === '720p' ? '14 c/s' : '28 c/s';
+                } else if (activeModel.id === 'h3-max') {
+                  rate = res === '480p' ? '5 c/s' : '8 c/s';
+                } else if (activeModel.id === 'gen4-turbo') {
+                  rate = '5 c/s';
+                } else {
+                  rate = res === '480p' ? '2 c/s' : res === '720p' ? '3 c/s' : '14 c/s';
+                }
+
                 return (
                   <button
                     key={res}
@@ -416,7 +540,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                     }`}
                   >
                     <span className="text-xs font-bold">{res}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">{rateLabel}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{rate}</span>
                   </button>
                 );
               })}
@@ -428,8 +552,8 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Duration*
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {([5, 10, 15] as VideoDuration[]).map((d) => (
+            <div className={`grid gap-2 ${activeModel?.supportedDurations.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              {activeModel?.supportedDurations.map((d) => (
                 <button
                   key={d}
                   type="button"
@@ -450,10 +574,10 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
           {/* Aspect Ratio */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Aspect Ratio
+              Aspect Ratio*
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
-              {ASPECT_RATIOS.map((item) => {
+            <div className={`grid gap-1.5 ${supportedRatios.length === 5 ? 'grid-cols-5' : supportedRatios.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              {supportedRatios.map((item) => {
                 const active = aspectRatio === item.ratio;
                 return (
                   <button
@@ -516,11 +640,11 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
             <div className="flex items-center gap-2 text-xs text-slate-300">
               <Info className="w-4 h-4 text-teal-400 flex-shrink-0" />
               <span>
-                Estimated cost: <strong className="text-teal-300 font-mono text-sm">{currentCost} credits</strong> ({duration}s @ {getCostPerSecond(resolution)} credits/s{referenceImageUrl ? ' + 1 credit start frame' : ''})
+                Estimated cost: <strong className="text-teal-300 font-mono text-sm">{costInfo.total} credits</strong> ({duration}s @ {costInfo.rateLabel})
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-mono pl-6">
-              2 credits per second at 480p, 3 at 720p, 14 at 1080p (720p upscaled). An image-to-video start frame adds 1 credit.
+              {costInfo.subtext}
             </p>
           </div>
 
@@ -536,7 +660,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
 
             <button
               type="submit"
-              disabled={!prompt.trim() || isSubmitting}
+              disabled={(!prompt.trim() && !referenceImageUrl.trim()) || (isGen4 && !referenceImageUrl.trim()) || isSubmitting}
               className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-gradient-to-r from-teal-500 via-teal-400 to-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -544,15 +668,15 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
                   <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                   Generating Video...
                 </>
-              ) : referenceImageUrl ? (
+              ) : isGen4 || referenceImageUrl ? (
                 <>
                   <ImageIcon className="w-4 h-4 font-bold" />
-                  Run (Image-to-Video)
+                  Run ({activeModel?.name || 'Image-to-Video'})
                 </>
               ) : (
                 <>
                   <Video className="w-4 h-4 font-bold" />
-                  Run (Generate Video)
+                  Run ({activeModel?.name || 'Generate Video'})
                 </>
               )}
             </button>

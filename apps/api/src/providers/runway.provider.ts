@@ -8,7 +8,59 @@ export class RunwayVideoProvider implements IVideoProvider {
     return CONFIG.RUNWAY_API_KEY;
   }
 
-  private mapRatioAndResolution(aspectRatio: string, resolution: string): string {
+  private getProviderModel(modelId: string): string {
+    switch (modelId) {
+      case 'gen4-turbo':
+        return 'gen4_turbo';
+      case 'wan3-prime':
+        return 'wan3_prime';
+      case 'h3-max':
+        return 'h3_max';
+      case 'grok-imagine-1-5-lite':
+      default:
+        return 'grok_imagine_1_5_lite';
+    }
+  }
+
+  private mapRatioForGen4Turbo(aspectRatio: string): string {
+    if (aspectRatio === '9:16') return '720:1280';
+    if (aspectRatio === '1:1') return '960:960';
+    if (aspectRatio === '4:3') return '1104:832';
+    return '1280:720';
+  }
+
+  private mapRatioForWan3(aspectRatio: string, resolution: string): string {
+    const is480 = resolution === '480p';
+    const is1080 = resolution === '1080p';
+
+    if (aspectRatio === 'auto') {
+      if (is480) return 'auto_480p';
+      if (is1080) return 'auto_1080p';
+      return 'auto_720p';
+    }
+
+    if (is480) {
+      if (aspectRatio === '9:16') return '480:832';
+      if (aspectRatio === '1:1') return '624:624';
+      if (aspectRatio === '4:3') return '720:544';
+      return '832:480';
+    }
+
+    if (is1080) {
+      if (aspectRatio === '9:16') return '1080:1920';
+      if (aspectRatio === '1:1') return '1440:1440';
+      if (aspectRatio === '4:3') return '1648:1248';
+      return '1920:1080';
+    }
+
+    // Default 720p
+    if (aspectRatio === '9:16') return '720:1280';
+    if (aspectRatio === '1:1') return '960:960';
+    if (aspectRatio === '4:3') return '1104:832';
+    return '1280:720';
+  }
+
+  private mapRatioForGrok(aspectRatio: string, resolution: string): string {
     const is480 = resolution === '480p';
     const is1080 = resolution === '1080p';
 
@@ -40,21 +92,43 @@ export class RunwayVideoProvider implements IVideoProvider {
       );
     }
 
+    const providerModel = this.getProviderModel(request.modelId);
+    const isGen4Turbo = providerModel === 'gen4_turbo';
+    const isImageToVideo = Boolean(request.referenceImageUrl) || isGen4Turbo;
+
+    if (isGen4Turbo && !request.referenceImageUrl) {
+      throw new Error(
+        "Gen-4 Turbo is Runway's fastest Image to Video model and requires a starter image (first frame). Please paste an image URL or upload an image."
+      );
+    }
+
     const promptText = request.enhancedPrompt || request.prompt;
-    const isImageToVideo = Boolean(request.referenceImageUrl);
     const endpoint = isImageToVideo 
       ? 'https://api.dev.runwayml.com/v1/image_to_video' 
       : 'https://api.dev.runwayml.com/v1/text_to_video';
 
     const payload: Record<string, any> = {
-      model: 'grok_imagine_1_5_lite',
-      promptText,
+      model: providerModel,
       duration: request.duration || 5,
-      ratio: this.mapRatioAndResolution(request.aspectRatio, request.resolution),
     };
 
-    if (isImageToVideo) {
+    if (promptText) {
+      payload.promptText = promptText;
+    }
+
+    if (isImageToVideo && request.referenceImageUrl) {
       payload.promptImage = request.referenceImageUrl;
+    }
+
+    // Model specific parameter mappings
+    if (providerModel === 'h3_max') {
+      payload.resolution = request.resolution === '480p' ? '480p' : '768p';
+    } else if (providerModel === 'gen4_turbo') {
+      payload.ratio = this.mapRatioForGen4Turbo(request.aspectRatio);
+    } else if (providerModel === 'wan3_prime') {
+      payload.ratio = this.mapRatioForWan3(request.aspectRatio, request.resolution);
+    } else {
+      payload.ratio = this.mapRatioForGrok(request.aspectRatio, request.resolution);
     }
 
     if (request.seed) {

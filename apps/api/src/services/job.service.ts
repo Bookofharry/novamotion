@@ -50,14 +50,27 @@ class JobService {
     const id = uuidv4();
     const now = new Date().toISOString();
 
-    let ratePerSecond = model.costPerSecond;
-    if (request.resolution === '480p') ratePerSecond = 2;
-    else if (request.resolution === '720p') ratePerSecond = 3;
-    else if (request.resolution === '1080p') ratePerSecond = 14;
-
-    let creditsUsed = request.duration * ratePerSecond;
-    if (request.referenceImageUrl) {
-      creditsUsed += 1; // 1 credit for reference start frame
+    let creditsUsed = 0;
+    if (model.id === 'gen4-turbo') {
+      creditsUsed = Math.max(10, request.duration * 5);
+    } else if (model.id === 'wan3-prime') {
+      let rate = 14;
+      if (request.resolution === '480p') rate = 6.8;
+      else if (request.resolution === '1080p') rate = 28;
+      creditsUsed = Math.round(request.duration * rate * 10) / 10;
+    } else if (model.id === 'h3-max') {
+      const rate = request.resolution === '480p' ? 5 : 8;
+      const effectiveDuration = Math.max(5, request.duration);
+      creditsUsed = effectiveDuration * rate;
+    } else {
+      // Default: Grok Imagine Video 1.5 Lite
+      let ratePerSecond = 3;
+      if (request.resolution === '480p') ratePerSecond = 2;
+      else if (request.resolution === '1080p') ratePerSecond = 14;
+      creditsUsed = request.duration * ratePerSecond;
+      if (request.referenceImageUrl) {
+        creditsUsed += 1; // 1 credit for reference start frame
+      }
     }
 
     const job: VideoJob = {

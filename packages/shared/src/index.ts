@@ -1,6 +1,6 @@
-export type AspectRatio = '16:9' | '9:16' | '1:1' | '4:3' | '21:9';
-export type VideoResolution = '480p' | '720p' | '1080p' | '4k';
-export type VideoDuration = 5 | 10 | 15;
+export type AspectRatio = '16:9' | '9:16' | '1:1' | '4:3' | '21:9' | 'auto';
+export type VideoResolution = '480p' | '720p' | '768p' | '1080p' | '4k';
+export type VideoDuration = 2 | 5 | 10 | 15 | 30;
 
 export type ProviderType = 'google' | 'runway' | 'mock' | 'luma';
 
