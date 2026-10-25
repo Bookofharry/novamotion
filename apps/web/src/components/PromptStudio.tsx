@@ -13,7 +13,9 @@ import {
   X,
   Loader2,
   RotateCcw,
-  AlertCircle
+  AlertCircle,
+  Cpu,
+  ChevronRight
 } from 'lucide-react';
 import { 
   AspectRatio, 
@@ -23,6 +25,7 @@ import {
   GenerateVideoRequest 
 } from '@videolab/shared';
 import { enhancePrompt, uploadReferenceImage } from '../services/api.js';
+import { ModelPickerModal } from './ModelPickerModal.js';
 
 interface PromptStudioProps {
   models: VideoModelInfo[];
@@ -70,6 +73,7 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<'cinematic' | 'cyberpunk' | 'photorealistic' | 'anime' | '3d-render'>('cinematic');
   const [selectedCamera, setSelectedCamera] = useState<'zoom-in' | 'zoom-out' | 'pan-left' | 'pan-right' | 'drone-shot' | 'orbital'>('zoom-in');
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -258,77 +262,62 @@ export const PromptStudio: React.FC<PromptStudioProps> = ({
     <div className="w-full space-y-6">
       <form onSubmit={handleGenerate} className="glass-panel rounded-2xl p-6 border border-white/10 space-y-6">
         
-        {/* Model Selection Grid */}
+        {/* Generative Model Selector (Click-to-Pop Modal) */}
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Generative Model Provider
             </label>
-            <span className="text-[11px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-mono text-teal-400">
               {models.length} Live Studio Engines Available
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-            {models.map((m) => {
-              const isSelected = activeModel?.id === m.id;
-              let badgeColor = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
-              let badgeText = 'xAI';
-              let rateTag = '2-14 c/s';
+          <div
+            onClick={() => setIsModelModalOpen(true)}
+            className="group glass-panel rounded-xl p-3.5 border border-white/10 hover:border-teal-500/50 bg-surface-elevated/70 hover:bg-surface-elevated/90 cursor-pointer transition-all flex items-center justify-between shadow-md"
+          >
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500/20 to-cyan-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                <Cpu className="w-5 h-5" />
+              </div>
 
-              if (m.id === 'runway-lite') {
-                badgeColor = 'bg-teal-500/20 text-teal-300 border-teal-500/30';
-                badgeText = 'Runway';
-                rateTag = '5 c/s';
-              } else if (m.id === 'gen4-turbo') {
-                badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
-                badgeText = 'Runway';
-                rateTag = '5 c/s (min 10c)';
-              } else if (m.id === 'wan3-prime') {
-                badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
-                badgeText = 'Alibaba';
-                rateTag = '6.8-28 c/s';
-              } else if (m.id === 'h3-max') {
-                badgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-                badgeText = 'MiniMax';
-                rateTag = '5-8 c/s';
-              }
-
-              return (
-                <div
-                  key={m.id}
-                  onClick={() => onSelectModel(m)}
-                  className={`cursor-pointer rounded-xl p-3.5 border transition-all text-left flex flex-col justify-between ${
-                    isSelected
-                      ? 'bg-gradient-to-b from-teal-500/20 to-teal-950/40 border-teal-500 shadow-md shadow-teal-500/15'
-                      : 'bg-surface-elevated/40 border-white/5 hover:border-white/20 hover:bg-surface-elevated/70'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-sm text-white tracking-tight">{m.name}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider border ${badgeColor}`}>
-                        {badgeText}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-300/90 line-clamp-2 leading-relaxed mb-2">
-                      {m.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-teal-400 font-semibold">{rateTag}</span>
-                    {isSelected && (
-                      <span className="text-teal-300 font-sans font-bold text-[10px] uppercase tracking-wider">
-                        ★ Active
-                      </span>
-                    )}
-                  </div>
+              <div className="overflow-hidden space-y-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-sm text-white group-hover:text-teal-300 transition-colors">
+                    {activeModel?.name || 'Select a Generative Model'}
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                    {activeModel?.id.includes('grok') ? 'xAI' : activeModel?.id.includes('wan') ? 'Alibaba' : activeModel?.id.includes('h3') ? 'MiniMax' : 'Runway'}
+                  </span>
+                  <span className="text-[11px] font-mono text-teal-400 font-semibold hidden sm:inline">
+                    {activeModel?.costPerSecond} credits/s
+                  </span>
                 </div>
-              );
-            })}
+                <p className="text-xs text-slate-400 truncate max-w-xl">
+                  {activeModel?.description}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 group-hover:bg-teal-500 text-teal-300 group-hover:text-slate-950 border border-teal-500/30 text-xs font-bold transition-all flex-shrink-0 ml-3"
+            >
+              <span>Switch Model</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
+
+        {/* Modal Dialog for Model Selection */}
+        <ModelPickerModal
+          isOpen={isModelModalOpen}
+          onClose={() => setIsModelModalOpen(false)}
+          models={models}
+          selectedModel={activeModel}
+          onSelectModel={onSelectModel}
+        />
 
         {/* Gen-4 Turbo Notice (if selected) */}
         {isGen4 && (
