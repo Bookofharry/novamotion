@@ -199,7 +199,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             )}
             <a
               href={videoUrl}
-              download="videolab-render.mp4"
+              download="novamotion-render.mp4"
               target="_blank"
               rel="noreferrer"
               className="p-1.5 hover:text-teal-400 transition-colors"

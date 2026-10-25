@@ -31,8 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
-                VideoLab
+              <span className="font-display font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-cyan-300 to-white">
+                NovaMotion
               </span>
               <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold bg-teal-500/20 text-teal-300 rounded border border-teal-500/30">
                 AI Studio

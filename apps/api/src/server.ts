@@ -56,6 +56,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(CONFIG.PORT, () => {
-  console.log(`🚀 VideoLab API server listening on http://localhost:${CONFIG.PORT}`);
+  console.log(`🚀 NovaMotion API server listening on http://localhost:${CONFIG.PORT}`);
   console.log(`🎯 Active environment: ${CONFIG.NODE_ENV}`);
 });

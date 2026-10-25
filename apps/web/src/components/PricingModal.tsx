@@ -73,7 +73,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 <Coins className="w-5 h-5" />
               </div>
               <h2 className="text-xl md:text-2xl font-display font-bold text-white tracking-wide">
-                VideoLab Generation Credits
+                NovaMotion Generation Credits
               </h2>
             </div>
             <p className="text-xs md:text-sm text-slate-400">

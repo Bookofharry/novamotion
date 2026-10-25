@@ -382,7 +382,7 @@ export const VideoHistory: React.FC<VideoHistoryProps> = ({
                       {job.resultVideoUrl && (
                         <a
                           href={job.resultVideoUrl}
-                          download={`videolab-${job.id}.mp4`}
+                          download={`novamotion-${job.id}.mp4`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors"
